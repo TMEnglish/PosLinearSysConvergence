@@ -1,0 +1,893 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+% ---------- LEAN NOTES: packages and macros used only in the section on the Lean formalization
+\usepackage{upquote}
+% \lean{name} typesets a Lean name; the line may break after a dot or an underscore.
+\DeclareUrlCommand\lean{\urlstyle{tt}}
+% The listings are copied from the Lean files and contain Unicode characters. Each of them is
+% declared here; \LeanChar makes a symbol at least as wide as one typewriter character. The
+% declarations are for pdfLaTeX (Overleaf's default compiler), not for XeLaTeX or LuaLaTeX.
+\newsavebox{\LeanBox}
+\newcommand{\LeanChar}[1]{\leavevmode\sbox{\LeanBox}{\ensuremath{#1}}%
+  \ifdim\wd\LeanBox<\fontdimen2\font
+    \makebox[\fontdimen2\font][c]{\usebox{\LeanBox}}%
+  \else
+    \usebox{\LeanBox}%
+  \fi}
+\DeclareUnicodeCharacter{03B9}{\LeanChar{\iota}}
+\DeclareUnicodeCharacter{03BC}{\LeanChar{\mu}}
+\DeclareUnicodeCharacter{211D}{\LeanChar{\mathbb{R}}}
+\DeclareUnicodeCharacter{2102}{\LeanChar{\mathbb{C}}}
+\DeclareUnicodeCharacter{2200}{\LeanChar{\forall}}
+\DeclareUnicodeCharacter{2203}{\LeanChar{\exists}}
+\DeclareUnicodeCharacter{2208}{\LeanChar{\in}}
+\DeclareUnicodeCharacter{2209}{\LeanChar{\notin}}
+\DeclareUnicodeCharacter{2227}{\LeanChar{\wedge}}
+\DeclareUnicodeCharacter{2264}{\LeanChar{\le}}
+\DeclareUnicodeCharacter{2260}{\LeanChar{\ne}}
+\DeclareUnicodeCharacter{2192}{\LeanChar{\to}}
+\DeclareUnicodeCharacter{2211}{\LeanChar{\Sigma}}
+\DeclareUnicodeCharacter{2022}{\LeanChar{\bullet}}
+\DeclareUnicodeCharacter{207B}{\LeanChar{{}^{-}}}
+\DeclareUnicodeCharacter{00B9}{\LeanChar{{}^{1}}}
+\DeclareUnicodeCharacter{1D65}{\LeanChar{{}_{v}}}
+\DeclareUnicodeCharacter{2080}{\LeanChar{{}_{0}}}
+\DeclareUnicodeCharacter{1D4DD}{\LeanChar{\mathcal{N}}}
+% ---------- end of the LEAN NOTES block ----------
+
+% ---------- theorem-like environments ----------
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ---------- macros ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\T}{\top}
+\renewcommand{\Re}{\operatorname{Re}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\cbar}{\bar{c}}
+
+\setlist[enumerate,1]{label=\textup{(\alph*)}, leftmargin=2.2em}
+
+\title{Convergence of the normalized state vector \\ in the positive linear system $\dot{x} = Mx$}
+\author{Thomas M. English\footnote{Correspondence: Tom.English.PhD@gmail.com} \and Claude Fable 5.2 (Anthropic)}
+\date{}
+
+\begin{document}
+\maketitle
+
+\noindent
+Let $M$ be a Metzler matrix and let $x(t)$ solve $\dot{x} = Mx$ from a nonnegative, nonzero
+initial state. These notes prove that the normalized solution $x(t)/\sum_i x_i(t)$ converges to a
+nonnegative eigenvector of $M$, with no irreducibility assumption
+(Theorem~\ref{thm:main}).
+% LEAN NOTES: the next sentence.
+The proof has been formalized in the proof assistant Lean; Section~\ref{sec:lean} describes the
+formalization.
+
+% =====================================================================
+\section{Setting and main result}\label{sec:setting}
+% =====================================================================
+
+\paragraph{Notation.}
+For a real vector or matrix $A$ we write $A \ge 0$ if every entry of $A$ is nonnegative, and
+$A \gg 0$ if every entry is positive. $I$ is the identity matrix, $\one$ is the column vector of
+ones (of the appropriate dimension), and $e_j$ is the $j$th standard basis vector. For an index set $R \subseteq \{1,\dots,n\}$,
+$x_R = (x_i)_{i \in R}$ is the corresponding subvector of $x$, and $M_{RR} = (M_{ij})_{i,j \in R}$
+is the corresponding principal submatrix of $M$; in both, the indices of $R$ are kept in ascending
+order. Eigenvalues may be complex, and $\Re\lambda$ is
+the real part of $\lambda$.
+
+\paragraph{Standing hypotheses.}
+$M$ is a real $n \times n$ matrix with $M_{ij} \ge 0$ whenever $i \ne j$ (a \emph{Metzler} matrix).
+The initial state $x(0) \in \R^n$ satisfies $x(0) \ge 0$ and $x(0) \ne 0$, and $x(t)$, $t \ge 0$,
+is the solution of $\dot{x} = Mx$. We write
+\[
+  W(t) = \sum_{i=1}^n x_i(t) = \one^\T x(t),
+  \qquad
+  p(t) = \frac{x(t)}{W(t)} .
+\]
+If $x_i$ is the abundance of type $i$, then $W$ is the total population and $p$ is the vector of
+type frequencies.
+
+\begin{definition}[Reachability]\label{def:reach}
+There is an \emph{arc} from $j$ to $i$ if $i \ne j$ and $M_{ij} > 0$. Index $i$ is
+\emph{reachable from} $j$ if $i = j$, or if there are indices $j = i_0, i_1, \dots, i_r = i$ with
+an arc from $i_{s-1}$ to $i_s$ for each $s = 1,\dots,r$. We set
+\begin{align*}
+  S &= \{\, j : x_j(0) > 0 \,\} && \text{(the support of the initial state),}\\
+  R &= \{\, i : i \text{ is reachable from some } j \in S \,\} && \text{(the reachable set; } S \subseteq R\text{),}\\
+  B &= M_{RR} && \text{(the matrix of the reduced system).}
+\end{align*}
+\end{definition}
+
+An arc from $j$ to $i$ means that type $j$ contributes directly to the growth of type $i$.
+
+\begin{theorem}\label{thm:main}
+Under the standing hypotheses:
+\begin{enumerate}
+  \item\label{thm:main:support} For every $t > 0$, $x_i(t) > 0$ if $i \in R$; and $x_i(t) = 0$ for
+        all $t \ge 0$ if $i \notin R$. In particular $W(t) > 0$ for all $t \ge 0$, so $p(t)$ is
+        well defined.
+  \item\label{thm:main:mu} The number
+        $\mu = \max\{\, \Re\lambda : \lambda \text{ is an eigenvalue of } B \,\}$
+        is itself an eigenvalue of $B$; in particular it is real.
+  \item\label{thm:main:limit} The limit $p^* = \lim_{t \to \infty} p(t)$ exists, and
+        \[
+          p^* \ge 0, \qquad \one^\T p^* = 1, \qquad p^*_i = 0 \ \text{ for } i \notin R,
+          \qquad M p^* = \mu\, p^* .
+        \]
+        In particular $\mu$ is an eigenvalue of $M$, with the nonnegative eigenvector $p^*$.
+\end{enumerate}
+\end{theorem}
+
+The eigenvalue $\mu$ belongs to the reduced matrix $B$. It need not be the eigenvalue of $M$ with
+the largest real part (Example~\ref{ex:reduction}).
+
+% =====================================================================
+\section{Background}\label{sec:background}
+% =====================================================================
+
+The proof uses three standard facts.
+
+\begin{lemma}[The matrix exponential]\label{lem:exp}
+For a real or complex square matrix $A$ and real $t$, the series
+$e^{At} = \sum_{k=0}^{\infty} \frac{t^k}{k!} A^k$ converges, and:
+\begin{enumerate}
+  \item\label{lem:exp:ode} $\frac{d}{dt} e^{At} = A e^{At}$ and $e^{A \cdot 0} = I$. Hence the
+        solution of $\dot{x} = Ax$ with initial value $x(0)$ is $x(t) = e^{At} x(0)$.
+  \item\label{lem:exp:semigroup} $e^{A(s+t)} = e^{As} e^{At}$ for all real $s$, $t$.
+  \item\label{lem:exp:shift} $e^{(A + cI)t} = e^{ct} e^{At}$ for every scalar $c \in \C$.
+  \item\label{lem:exp:eig} If $Au = \lambda u$ with $\lambda \in \C$, then $e^{At} u = e^{\lambda t} u$.
+\end{enumerate}
+\end{lemma}
+
+\begin{lemma}[Entries of the matrix exponential]\label{lem:modes}
+Let $A$ be an $m \times m$ matrix with distinct eigenvalues $\lambda_1, \dots, \lambda_r \in \C$,
+where $\lambda_\ell$ has algebraic multiplicity $m_\ell$. Then there are constant matrices
+$C_{\ell,j} \in \C^{m \times m}$ such that, for all real $t$,
+\begin{equation}\label{eq:modes}
+  e^{At} = \sum_{\ell=1}^{r} \sum_{j=0}^{m_\ell - 1} t^{j} e^{\lambda_\ell t}\, C_{\ell,j} .
+\end{equation}
+In words: every entry of $e^{At}$ is a finite sum of terms $c\, t^{j} e^{\lambda t}$, with
+$\lambda$ an eigenvalue of $A$ and $j$ smaller than the multiplicity of $\lambda$.
+\end{lemma}
+
+\begin{proof}
+For $\lambda \in \C$ let
+\[
+  G_\lambda = \{\, v \in \C^{m} : (A - \lambda I)^{k} v = 0 \text{ for some } k \ge 0 \,\}
+\]
+be the \emph{generalized eigenspace} of $\lambda$. It is a subspace of $\C^{m}$ that $A$ maps into
+itself, and it is not $\{0\}$ exactly when $\lambda$ is an eigenvalue of $A$. We use two standard
+facts about generalized eigenspaces
+% NOTE: Chapter 8 of this edition ("Operators on Complex Vector Spaces") treats generalized
+% eigenspaces. (As far as I know, the book defines the multiplicity of an eigenvalue as the
+% dimension of its generalized eigenspace and identifies the resulting characteristic polynomial
+% with det(zI - A) in a later chapter.) The book itself was not inspected, hence "see, e.g.".
+(see, e.g., \cite[Chapter~8]{Axler}):
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item every vector of $\C^{m}$ is a sum $v_1 + \dots + v_r$ with $v_\ell \in G_{\lambda_\ell}$
+        for each $\ell$;
+  \item the dimension of $G_{\lambda_\ell}$ is the algebraic multiplicity $m_\ell$, that is, the
+        multiplicity of $\lambda_\ell$ as a root of the characteristic polynomial of $A$.
+\end{enumerate}
+
+\emph{The power $m_\ell$ of $A - \lambda_\ell I$ vanishes on $G_{\lambda_\ell}$.} The matrix
+$N = A - \lambda_\ell I$ maps $G_{\lambda_\ell}$ into itself, and some power of $N$ vanishes on
+$G_{\lambda_\ell}$: take a power that kills every vector of a basis. So the restriction of $N$ to
+$G_{\lambda_\ell}$ is nilpotent. Its characteristic polynomial is therefore $z^{d}$, where $d$ is
+the dimension of $G_{\lambda_\ell}$, and by the Cayley--Hamilton theorem $N^{d}$ vanishes on
+$G_{\lambda_\ell}$. By (ii), $d = m_\ell$. Hence
+\begin{equation}\tag{$\ast$}\label{eq:nilpotent}
+  (A - \lambda_\ell I)^{m_\ell}\, v = 0 \qquad \text{for every } v \in G_{\lambda_\ell} .
+\end{equation}
+
+\emph{The exponential on $G_{\lambda_\ell}$.} Let $v \in G_{\lambda_\ell}$. By
+Lemma~\ref{lem:exp}\ref{lem:exp:shift}, $e^{At} = e^{\lambda_\ell t}\, e^{(A - \lambda_\ell I)t}$.
+Apply the series for $e^{(A - \lambda_\ell I)t}$ to $v$; by \eqref{eq:nilpotent} the terms with
+$j \ge m_\ell$ vanish, so
+\[
+  e^{At} v = e^{\lambda_\ell t} \sum_{j=0}^{m_\ell - 1} \frac{t^{j}}{j!}\, (A - \lambda_\ell I)^{j} v .
+\]
+
+\emph{The columns of $e^{At}$.} By (i), write the $b$th standard basis vector as
+$e_b = v_{b,1} + \dots + v_{b,r}$ with $v_{b,\ell} \in G_{\lambda_\ell}$. The $b$th column of
+$e^{At}$ is
+\[
+  e^{At} e_b = \sum_{\ell=1}^{r} \sum_{j=0}^{m_\ell - 1} t^{j} e^{\lambda_\ell t}\,
+  \frac{1}{j!}\, (A - \lambda_\ell I)^{j} v_{b,\ell} .
+\]
+This is \eqref{eq:modes}, with $C_{\ell,j}$ the matrix whose $b$th column is
+$\frac{1}{j!} (A - \lambda_\ell I)^{j} v_{b,\ell}$, for $b = 1, \dots, m$.
+\end{proof}
+
+For example, $A = \begin{bmatrix} 1 & 1 \\ 0 & 1 \end{bmatrix}$ gives
+$e^{At} = \begin{bmatrix} e^{t} & t e^{t} \\ 0 & e^{t} \end{bmatrix}$. Powers of $t$ occur only
+when a repeated eigenvalue has too few independent eigenvectors; if $A$ is diagonalizable, only
+$j = 0$ occurs.
+
+\begin{lemma}[Perron--Frobenius for Metzler matrices]\label{lem:PF}
+Let $B$ be a Metzler matrix and let $\mu$ be the largest real part of an eigenvalue of $B$. Then
+$\mu$ is an eigenvalue of $B$, and every eigenvalue $\lambda \ne \mu$ of $B$ satisfies
+$\Re\lambda < \mu$. The eigenvalue $\mu$ itself may be repeated, and no irreducibility is assumed.
+\end{lemma}
+
+\begin{proof}
+For real vectors $u$ and $v$ we write $u \ge v$ if $u - v \ge 0$, and $u \le 0$ if $-u \ge 0$. For
+a complex vector $z$, $|z|$ is the real vector with entries $|z_i|$.
+
+\emph{\textup{(i)} If $A$ is a Metzler matrix, then $e^{At} \ge 0$ for $t \ge 0$.} Choose
+$c \ge 0$ with $P = A + cI \ge 0$. By Lemma~\ref{lem:exp}\ref{lem:exp:shift},
+$e^{At} = e^{-ct} e^{Pt} = e^{-ct} \sum_{k=0}^{\infty} \frac{t^{k}}{k!} P^{k}$, and every power
+$P^{k}$ is a nonnegative matrix. (Step~1 of Section~\ref{sec:proof} repeats this argument and
+refines it.)
+
+\emph{\textup{(ii)} Inverse positivity.} Let $A$ be a Metzler matrix all of whose eigenvalues have
+negative real part, and let $d$ be a real vector with $Ad \le 0$. Then $d \ge 0$.
+
+To see this, put $\psi(t) = e^{At} d$. Since $A$ commutes with $e^{At}$,
+Lemma~\ref{lem:exp}\ref{lem:exp:ode} gives $\dot{\psi}(t) = e^{At} A d$, and by (i) this vector is
+$\le 0$ for $t \ge 0$. So every entry of $\psi$ is nonincreasing on $[0, \infty)$. By
+Lemma~\ref{lem:modes}, every entry of $e^{At}$ is a sum of terms $a\, t^{j} e^{\lambda t}$ with
+$\Re\lambda < 0$. Each such term tends to $0$ as $t \to \infty$, because its modulus is
+$|a|\, t^{j} e^{(\Re\lambda) t}$ and exponential decay beats any power of $t$. Hence
+$\psi(t) \to 0$. A nonincreasing function on $[0, \infty)$ that tends to $0$ is nonnegative, so
+$d = \psi(0) \ge 0$.
+
+\emph{\textup{(iii)} A comparison.} Let $\sigma$ be a real number with $\Re\lambda \le \sigma$ for
+every eigenvalue $\lambda$ of $B$. Suppose that $Bw \ge r w$ for a real number $r$ and a real
+vector $w \ge 0$ with $w \ne 0$. Then $r \le \sigma$.
+
+Suppose instead that $r > \sigma$. The matrix $A = B - rI$ is Metzler, and its eigenvalues are the
+numbers $\lambda - r$ with $\lambda$ an eigenvalue of $B$, so they have negative real part. Also
+$A(-w) = -(Bw - rw) \le 0$. By (ii), $-w \ge 0$. With $w \ge 0$ this gives $w = 0$, a
+contradiction.
+
+\emph{\textup{(iv)} Moduli of an eigenvector.} Let $Bz = \lambda z$ with $\lambda \in \C$ and $z$
+a complex vector, and choose $c \ge 0$ with $P = B + cI \ge 0$. Then $Pz = (\lambda + c) z$, so for
+every index $i$
+\[
+  |\lambda + c|\, |z_i| = \Bigl| \sum_{j} P_{ij} z_j \Bigr| \le \sum_{j} P_{ij}\, |z_j|
+  = (B|z|)_i + c\, |z_i| .
+\]
+That is, $B|z| \ge (|\lambda + c| - c)\, |z|$.
+
+\emph{\textup{(v)} Conclusion.} Let $\lambda$ be an eigenvalue of $B$ with $\Re\lambda = \mu$, and
+let $z \ne 0$ be an eigenvector for it. The vector $|z| \ge 0$ is not zero, so (iv) and (iii), with
+$\sigma = \mu$, $w = |z|$ and $r = |\lambda + c| - c$, give $|\lambda + c| - c \le \mu$. Hence
+\[
+  |\lambda + c| \le \mu + c = \Re(\lambda + c) .
+\]
+A complex number whose modulus is at most its real part is real. So $\lambda$ is real, that is,
+$\lambda = \mu$. By the definition of $\mu$, some eigenvalue of $B$ has real part $\mu$; we have
+just seen that it equals $\mu$. So $\mu$ is an eigenvalue of $B$, and it is the only eigenvalue
+with real part $\mu$: every other eigenvalue has real part less than $\mu$.
+\end{proof}
+
+Lemma~\ref{lem:PF} is the form, for Metzler matrices, of the classical theorem that the spectral
+radius of a nonnegative matrix is an eigenvalue of that matrix
+% NOTE: section placement confirmed from the publisher's table of contents, and the number agrees
+% with how other papers cite the 2013 edition; the page itself was not inspected.
+\cite[Theorem~8.3.1]{HJ}. It also follows from that theorem, applied to $P = B + cI$.
+
+% =====================================================================
+\section{Proof of Theorem~\ref{thm:main}}\label{sec:proof}
+% =====================================================================
+
+\subsection*{Step 1. $e^{Mt}$ is nonnegative, and reachability decides which entries are positive}
+
+Choose $c \ge 0$ with $P = M + cI \ge 0$; for instance $c = \max_i |M_{ii}|$. By
+Lemma~\ref{lem:exp}\ref{lem:exp:shift},
+\[
+  e^{Mt} = e^{-ct} e^{Pt} = e^{-ct} \sum_{k=0}^{\infty} \frac{t^{k}}{k!} P^{k} .
+\]
+Every power $P^k$ is a nonnegative matrix, so $e^{Mt} \ge 0$ for $t \ge 0$. Moreover, for $t > 0$
+the $(i,j)$ entry of $e^{Mt}$ is positive if $[P^k]_{ij} > 0$ for at least one $k \ge 0$, and it is
+zero for all $t \ge 0$ if $[P^k]_{ij} = 0$ for every $k \ge 0$.
+
+For $k \ge 1$, the entry $[P^k]_{ij}$ is the sum, over all sequences of indices $j = i_0, i_1, \dots, i_k = i$,
+of the products
+\[
+  P_{i_k i_{k-1}} \cdots P_{i_2 i_1} P_{i_1 i_0} .
+\]
+These products are nonnegative, so the sum is positive exactly when some sequence has every factor
+positive. In such a sequence each step
+either stays put ($i_s = i_{s-1}$, a diagonal entry of $P$) or follows an arc
+($i_s \ne i_{s-1}$ and $M_{i_s i_{s-1}} > 0$, since $P$ and $M$ have the same off-diagonal
+entries). Deleting the steps that stay put shows that $i$ is reachable from $j$. Conversely, if $i$
+is reachable from $j$ along $k \ge 1$ arcs then $[P^k]_{ij} > 0$, and the case $i = j$ is covered by
+$P^0 = I$. Therefore, for every $t > 0$,
+\begin{equation}\label{eq:pattern}
+  [e^{Mt}]_{ij} > 0 \ \text{ if $i$ is reachable from $j$,}
+  \qquad
+  [e^{Mt}]_{ij} = 0 \ \text{ otherwise.}
+\end{equation}
+
+\subsection*{Step 2. Only the reachable indices matter}
+
+Since $x(t) = e^{Mt} x(0)$ and $x_j(0) = 0$ for $j \notin S$,
+\[
+  x_i(t) = \sum_{j \in S} [e^{Mt}]_{ij}\, x_j(0) ,
+\]
+a sum of nonnegative terms. If $i \in R$, some $j \in S$ has $i$ reachable from $j$, and by
+\eqref{eq:pattern} the corresponding term is positive for $t > 0$. If $i \notin R$, every term is
+zero. Hence, for every $t > 0$,
+\begin{equation}\label{eq:support}
+  x_i(t) > 0 \ \text{ if } i \in R,
+  \qquad
+  x_i(t) = 0 \ \text{ if } i \notin R,
+\end{equation}
+and $x_i(t) = 0$ for all $t \ge 0$ when $i \notin R$. Three consequences follow.
+
+\begin{itemize}[leftmargin=2em]
+  \item \emph{The total is positive.} $W(0) > 0$ because $x(0) \ge 0$ is nonzero, and $W(t) > 0$
+        for $t > 0$ by \eqref{eq:support}. This proves
+        part~\ref{thm:main:support} of the theorem.
+  \item \emph{No arc leaves $R$.} If $j \in R$ and $i \notin R$, then
+        \begin{equation}\label{eq:noarc}
+          M_{ij} = 0 ,
+        \end{equation}
+        because otherwise $i$ would be reachable from $j$, and hence from $S$.
+  \item \emph{The reduced system.} Put $y(t) = x_R(t)$. For $i \in R$,
+        $\dot{x}_i = \sum_{j} M_{ij} x_j = \sum_{j \in R} M_{ij} x_j$, because $x_j \equiv 0$ for
+        $j \notin R$. Hence
+        \[
+          \dot{y} = By, \qquad y(t) = e^{Bt} y(0), \qquad y(t) \gg 0 \ \text{ for every } t > 0 .
+        \]
+        The matrix $B$ is Metzler, because its off-diagonal entries are off-diagonal entries of $M$.
+\end{itemize}
+
+\subsection*{Step 3. The leading term of $e^{Bt}$}
+
+Apply Lemma~\ref{lem:PF} to $B$. This proves part~\ref{thm:main:mu} of the theorem, and shows that
+every eigenvalue $\lambda \ne \mu$ of $B$ has $\Re\lambda < \mu$. Apply Lemma~\ref{lem:modes} to
+$B$ and write $C_j$ for the coefficient matrix of $t^{j} e^{\mu t}$:
+\begin{equation}\label{eq:expansion}
+  e^{Bt} = \sum_{j} t^{j} e^{\mu t}\, C_j
+  \;+\; \sum_{\lambda \ne \mu} \sum_{j} t^{j} e^{\lambda t}\, C_{\lambda,j} .
+\end{equation}
+
+\emph{Some $C_j$ is nonzero.} Take $u \ne 0$ with $Bu = \mu u$. By
+Lemma~\ref{lem:exp}\ref{lem:exp:eig}, $e^{-\mu t} e^{Bt} u = u$ for all $t$. If every $C_j$ were
+zero, then by \eqref{eq:expansion} each entry of $e^{-\mu t} e^{Bt}$ would be a sum of terms
+$c\, t^{j} e^{(\lambda - \mu)t}$ with $\Re\lambda < \mu$. Each such term tends to $0$ as
+$t \to \infty$, because its modulus is $|c|\, t^{j} e^{-(\mu - \Re\lambda)t}$ and exponential decay
+beats any power of $t$. This would give $u = 0$, a contradiction.
+
+\emph{Definition of $k$ and $L$.} Let $k$ be the largest $j$ with $C_j \ne 0$, and put $L = C_k$.
+Divide \eqref{eq:expansion} by $t^{k} e^{\mu t}$. Every term other than $L$ carries a factor
+$t^{j-k}$ with $j < k$, or a factor $t^{j-k} e^{(\lambda - \mu)t}$ with $\Re\lambda < \mu$; both
+tend to $0$. Therefore
+\begin{equation}\label{eq:L}
+  \lim_{t \to \infty} \frac{e^{Bt}}{t^{k} e^{\mu t}} = L \ne 0 .
+\end{equation}
+The fastest-growing terms of $e^{Bt}$ grow like $t^{k} e^{\mu t}$, and $L$ holds their
+coefficients. Both $k$ and $L$ depend only on $B$.
+
+\subsection*{Step 4. $L$ is nonnegative, and its nonzero columns are eigenvectors}
+
+\emph{\textup{(i)} $L \ge 0$.} By Step~1 applied to the Metzler matrix $B$, $e^{Bt} \ge 0$; and
+$t^{k} e^{\mu t} > 0$ for $t > 0$. A limit of nonnegative matrices is nonnegative; in particular
+$L$ is real.
+
+\emph{\textup{(ii)} $BL = \mu L$.} Fix $s > 0$. Since $e^{Bs} e^{Bt} = e^{B(s+t)}$ by
+Lemma~\ref{lem:exp}\ref{lem:exp:semigroup},
+\[
+  e^{Bs} \cdot \frac{e^{Bt}}{t^{k} e^{\mu t}}
+  \;=\;
+  \frac{(s+t)^{k} e^{\mu(s+t)}}{t^{k} e^{\mu t}}
+  \cdot
+  \frac{e^{B(s+t)}}{(s+t)^{k} e^{\mu(s+t)}} .
+\]
+Let $t \to \infty$. The left side tends to $e^{Bs} L$ by \eqref{eq:L}. On the right, the first
+factor equals $(1 + s/t)^{k} e^{\mu s}$ and tends to $e^{\mu s}$, and the second factor tends to
+$L$ by \eqref{eq:L}. Hence
+\begin{equation}\label{eq:semigroup}
+  e^{Bs} L = e^{\mu s} L \qquad \text{for every } s > 0 .
+\end{equation}
+Subtract $L$ from both sides and divide by $s$:
+\[
+  \frac{e^{Bs} - I}{s}\, L = \frac{e^{\mu s} - 1}{s}\, L .
+\]
+As $s \to 0^{+}$ the left side tends to $BL$, because
+$\frac{d}{ds} e^{Bs} \big|_{s=0} = B$ by Lemma~\ref{lem:exp}\ref{lem:exp:ode}, and the right side
+tends to $\mu L$. Therefore
+\begin{equation}\label{eq:eig}
+  BL = \mu L .
+\end{equation}
+Consequently, for every vector $z$ we have $B(Lz) = \mu\,(Lz)$: the vector $Lz$ is either zero or
+an eigenvector of $B$ for the eigenvalue $\mu$.
+
+\emph{\textup{(iii)} If $z \gg 0$, then $Lz \ne 0$.} By \eqref{eq:L} and (i), some entry $L_{ij}$
+is positive. Then $(Lz)_i = \sum_{l} L_{il} z_l \ge L_{ij} z_j > 0$.
+
+\subsection*{Step 5. The limit for the reduced system}
+
+Fix any $\tau > 0$ and put $z = y(\tau)$; by Step~2, $z \gg 0$. For $t > 0$,
+Lemma~\ref{lem:exp}\ref{lem:exp:semigroup} gives $y(\tau + t) = e^{Bt} z$, so by \eqref{eq:L}
+\[
+  \frac{y(\tau + t)}{t^{k} e^{\mu t}} \;\longrightarrow\; v := Lz
+  \qquad (t \to \infty).
+\]
+By Step~4, $v \ge 0$, $v \ne 0$ and $Bv = \mu v$. Summing the entries,
+$\one^\T y(\tau + t) / (t^{k} e^{\mu t}) \to \one^\T v > 0$. Dividing the two limits, which is
+legitimate because the limit of the denominator is not zero,
+\begin{equation}\label{eq:q}
+  \frac{y(t)}{\one^\T y(t)} \;\longrightarrow\; q := \frac{v}{\one^\T v}
+  \qquad (t \to \infty),
+  \qquad\text{with}\quad q \ge 0, \quad \one^\T q = 1, \quad Bq = \mu q .
+\end{equation}
+
+\subsection*{Step 6. Back to the full system}
+
+By \eqref{eq:support}, $W(t) = \one^\T y(t)$. Hence $p_R(t) = y(t)/\one^\T y(t)$, and $p_i(t) = 0$
+for $i \notin R$. By \eqref{eq:q}, $p(t) \to p^*$, where $p^*_R = q$ and $p^*_i = 0$ for
+$i \notin R$. So $p^* \ge 0$ and $\one^\T p^* = 1$.
+
+It remains to check $M p^* = \mu p^*$. For any $i$, $(M p^*)_i = \sum_{j \in R} M_{ij} q_j$.
+If $i \in R$, this is $(Bq)_i = \mu q_i = \mu p^*_i$. If $i \notin R$, every $M_{ij}$ in the sum is
+zero by \eqref{eq:noarc}, so $(M p^*)_i = 0 = \mu p^*_i$. This proves
+part~\ref{thm:main:limit}. \qed
+
+\begin{remark}[What each hypothesis does]\label{rem:roles}
+The Metzler property is used in four places. It gives $e^{Mt} \ge 0$ and, because sums of
+nonnegative products cannot cancel, the exact positivity pattern \eqref{eq:pattern} (Step~1). It
+makes the absence of an arc from $j$ to $i$ mean $M_{ij} = 0$, which is \eqref{eq:noarc} (Step~2).
+It makes the eigenvalue of largest real part real and strictly dominant, so that the leading term
+of $e^{Bt}$ does not oscillate (Lemma~\ref{lem:PF}, Step~3). And it gives $L \ge 0$ (Step~4). Strict positivity of
+$y(\tau)$ is used once, in Step~5, to guarantee $L y(\tau) \ne 0$. In a general linear system both
+can fail: nonreal eigenvalues cause persistent oscillation in the direction of the solution when
+they contribute to its leading term, and an initial state can have no component along the leading
+term of the matrix exponential. The reduction to $R$ is what supplies strict positivity. Applied
+to the full matrix $M$, the argument would fail: in Example~\ref{ex:reduction} the leading
+coefficient matrix of $e^{Mt}$ annihilates $x(0)$, and the solution grows at a rate smaller than
+the largest eigenvalue of $M$.
+\end{remark}
+
+\begin{example}[The reduction to $R$ is needed]\label{ex:reduction}
+Let $M = \begin{bmatrix} 1 & 0 \\ 0 & 2 \end{bmatrix}$. For $x(0) = (1, 0)^\T$ we get $R = \{1\}$,
+$B = [\,1\,]$, $\mu = 1$ and $p(t) = e_1$ for all $t$, although the dominant eigenvalue of $M$ is
+$2$. For $x(0) \gg 0$ we get $R = \{1,2\}$, $\mu = 2$ and $p^* = e_2$.
+\end{example}
+
+% >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+% LEAN NOTES. This section, the block marked "LEAN NOTES" in the preamble and the sentence marked
+% "LEAN NOTES" in the opening paragraph are the only places where this file mentions Lean. A
+% version of the file without them is obtained by deleting those three pieces.
+% >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+% =====================================================================
+\section{Notes on the Lean formalization}\label{sec:lean}
+% =====================================================================
+
+Theorem~\ref{thm:main} and the whole of its proof, that is, Lemmas~\ref{lem:exp}--\ref{lem:PF} and
+Steps~1--6, have been formalized in the proof assistant Lean~4, on top of the mathematical library
+Mathlib, and Lean accepts the formal proof. Remark~\ref{rem:roles}, Example~\ref{ex:reduction} and
+the unnumbered comments between the numbered statements are commentary; they are not formalized.
+
+This section says where the formal statements are, how to read the formal statement of the
+theorem, and where the formal proof differs from the text. The Lean files are the authority: the
+listings below are copied from them, and if a listing and a file ever disagree, the file is right.
+
+\subsection{The files}\label{sec:lean:files}
+
+The Lean project is called \lean{pos_linear_sys_convergence}. It uses Lean~4.36.0 and
+Mathlib~v4.36.0. Its library \lean{PosLinearSysConvergence} consists of six files:
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\hline
+File & Content \\
+\hline
+\lean{Defs.lean} & Metzler matrices; Definition~\ref{def:reach} \\
+\lean{MatrixExp.lean} & Lemma~\ref{lem:exp} \\
+\lean{Positivity.lean} & Step~1 \\
+\lean{Modes.lean} & Lemma~\ref{lem:modes}; Step~3 \\
+\lean{PerronFrobenius.lean} & Lemma~\ref{lem:PF} \\
+\lean{Main.lean} & Steps~2, 4, 5 and~6; Theorem~\ref{thm:main} \\
+\hline
+\end{tabular}
+\end{center}
+Every name defined in these files begins with the prefix \lean{PosLinearSys.}, which is omitted
+below. So the full name of the main theorem is \lean{PosLinearSys.tendsto_normalized_solution}.
+
+\subsection{The definitions}\label{sec:lean:defs}
+
+The standing hypothesis on $M$ and Definition~\ref{def:reach} are the following five definitions,
+from \lean{Defs.lean} (the explanatory comments in the file are left out).
+{\small
+\begin{verbatim}
+def IsMetzler (M : Matrix ι ι ℝ) : Prop :=
+  ∀ i j, i ≠ j → 0 ≤ M i j
+
+def Arc (M : Matrix ι ι ℝ) (j i : ι) : Prop :=
+  i ≠ j ∧ 0 < M i j
+
+def Reachable (M : Matrix ι ι ℝ) (j i : ι) : Prop :=
+  Relation.ReflTransGen (Arc M) j i
+
+open Classical in
+noncomputable def reachSet (M : Matrix ι ι ℝ) (x₀ : ι → ℝ) : Finset ι :=
+  Finset.univ.filter fun i => ∃ j, 0 < x₀ j ∧ Reachable M j i
+
+def reducedMatrix (M : Matrix ι ι ℝ) (x₀ : ι → ℝ) :
+    Matrix (reachSet M x₀) (reachSet M x₀) ℝ :=
+  M.submatrix (fun i => (i : ι)) (fun i => (i : ι))
+\end{verbatim}
+}
+They are read as follows.
+
+\begin{itemize}[leftmargin=2em]
+  \item \emph{Indices, vectors and matrices.} The index set $\{1, \dots, n\}$ of the text is
+        replaced by an arbitrary finite set \verb|ι| (in Lean, a finite \emph{type}). A vector is
+        a function \verb|ι → ℝ|, so \verb|x₀ j| is the entry $(x_0)_j$. \verb|Matrix ι ι ℝ| is the
+        type of real matrices with rows and columns indexed by \verb|ι|, and \verb|M i j| is the
+        entry $M_{ij}$. The first three definitions make sense for any \verb|ι|. The last two need
+        \verb|ι| to be finite, an assumption that the file declares on a separate line.
+  \item \emph{Metzler matrices.} \verb|IsMetzler M| says that $M_{ij} \ge 0$ whenever $i \ne j$.
+  \item \emph{Arcs.} \verb|Arc M j i| says that there is an arc from $j$ to $i$. The arguments are
+        in the order source, target, whereas the matrix entry is \verb|M i j|, with the target as
+        the row index, exactly as in Definition~\ref{def:reach}.
+  \item \emph{Reachability.} \lean{Relation.ReflTransGen} is Mathlib's reflexive and transitive
+        closure of a relation: \verb|Relation.ReflTransGen r a b| holds exactly when $b = a$ or
+        there is a finite chain $a = c_0, c_1, \dots, c_r = b$ in which $c_{s-1}$ is related to
+        $c_s$ by \verb|r| for each $s$. So \verb|Reachable M j i| says that $i$ is reachable
+        from $j$ in the sense of Definition~\ref{def:reach}.
+  \item \emph{The reachable set.} \verb|reachSet M x₀| is the set $R$ that belongs to the initial
+        state $x_0$: the expression \lean{Finset.univ.filter} selects, from the set of all
+        indices, those $i$ for which some $j$ has $(x_0)_j > 0$ and $i$ reachable from $j$. The
+        support $S$ is not given a name. The words \verb|open Classical in| and
+        \lean{noncomputable} record that membership in $R$ is settled by classical logic, not by
+        an algorithm. They have no mathematical content.
+  \item \emph{The reduced matrix.} \verb|reducedMatrix M x₀| is $B = M_{RR}$. Its rows and columns
+        are indexed by the elements of $R$ themselves: \verb|M.submatrix f g| is the matrix with
+        entries $M_{f(i)\,g(j)}$, and here $f$ and $g$ are both the inclusion of $R$ in the index
+        set. No ordering of $R$ is involved, so the convention of Section~\ref{sec:setting} that
+        the indices of $R$ are kept in ascending order has no counterpart, and none is needed.
+\end{itemize}
+
+\subsection{The main theorem}\label{sec:lean:main}
+
+Theorem~\ref{thm:main} is the following statement, from \lean{Main.lean}. In the file it is
+followed by its proof.
+{\footnotesize
+\begin{verbatim}
+theorem tendsto_normalized_solution (M : Matrix ι ι ℝ) (hM : IsMetzler M) (x : ℝ → ι → ℝ)
+    (hx0 : ∀ i, 0 ≤ x 0 i) (hx0' : x 0 ≠ 0)
+    (hx : ∀ t ∈ Set.Ici (0 : ℝ), HasDerivWithinAt x (M *ᵥ x t) (Set.Ici 0) t) :
+    ((∀ t : ℝ, 0 < t → ∀ i ∈ reachSet M (x 0), 0 < x t i) ∧
+      (∀ t : ℝ, 0 ≤ t → ∀ i ∉ reachSet M (x 0), x t i = 0) ∧
+      (∀ t : ℝ, 0 ≤ t → 0 < ∑ i, x t i)) ∧
+    ∃ μ : ℝ,
+      (IsGreatest
+          (Complex.re '' spectrum ℂ ((reducedMatrix M (x 0)).map (algebraMap ℝ ℂ))) μ ∧
+        μ ∈ spectrum ℝ (reducedMatrix M (x 0))) ∧
+      ∃ p : ι → ℝ,
+        Tendsto (fun t : ℝ => (∑ i, x t i)⁻¹ • x t) atTop (nhds p) ∧
+          (∀ i, 0 ≤ p i) ∧ ∑ i, p i = 1 ∧ (∀ i ∉ reachSet M (x 0), p i = 0) ∧
+            M *ᵥ p = μ • p ∧ μ ∈ spectrum ℝ M
+\end{verbatim}
+}
+The statement is preceded in the file by the line
+\begin{center}
+\verb|variable {ι : Type*} [Fintype ι] [DecidableEq ι]|
+\end{center}
+which says that \verb|ι| is a finite type in which equality of two indices can be decided. The
+second assumption is a technicality, needed to write down the identity matrix; in classical logic
+it holds for every type.
+
+\paragraph{Hypotheses.}
+\begin{itemize}[leftmargin=2em]
+  \item \verb|(M : Matrix ι ι ℝ) (hM : IsMetzler M)|: $M$ is a Metzler matrix. Each hypothesis has
+        a name (here \lean{hM}), by which the proof refers to it.
+  \item \verb|(x : ℝ → ι → ℝ)|: the solution, with \verb|x t i| standing for $x_i(t)$. The
+        function is defined for every real $t$, but the hypotheses and the conclusions involve
+        only $t \ge 0$. The values of $x$ at negative times are arbitrary and play no role.
+  \item \verb|hx0| and \verb|hx0'|: $x(0) \ge 0$ and $x(0) \ne 0$.
+  \item \verb|hx|: $x$ solves $\dot{x} = Mx$ on $[0, \infty)$. Here \verb|Set.Ici 0| is the
+        interval $[0, \infty)$, \verb|M *ᵥ x t| is the product $M x(t)$ of a matrix and a vector,
+        and \verb|HasDerivWithinAt x v (Set.Ici 0) t| says that the restriction of $x$ to
+        $[0, \infty)$ has derivative $v$ at $t$. For $t > 0$ this is the ordinary derivative. At
+        $t = 0$ it is the derivative from the right.
+\end{itemize}
+
+\paragraph{Conclusions.}
+\begin{itemize}[leftmargin=2em]
+  \item \emph{Part~\ref{thm:main:support}} is the first three lines after the hypotheses:
+        $x_i(t) > 0$ for $t > 0$ and $i \in R$; $x_i(t) = 0$ for $t \ge 0$ and $i \notin R$; and
+        $W(t) > 0$ for $t \ge 0$. The third clause, which the text presents as a consequence of
+        the first two, is stated separately.
+  \item \verb|∃ μ : ℝ| introduces the number $\mu$. Everything that follows is about this $\mu$,
+        so parts~\ref{thm:main:mu} and~\ref{thm:main:limit} concern the same number.
+  \item \emph{Part~\ref{thm:main:mu}} is the conjunction that begins with \lean{IsGreatest}.
+        In it,
+        \begin{center}
+        \verb|(reducedMatrix M (x 0)).map (algebraMap ℝ ℂ)|
+        \end{center}
+        is $B$ regarded as a complex matrix. For a square matrix $A$, \verb|spectrum ℂ A| is the
+        set of complex
+        numbers $\lambda$ for which $\lambda I - A$ is not invertible, that is, the set of
+        eigenvalues of $A$. \verb|Complex.re '' S| is the image of the set $S$ under $\Re$, and
+        \verb|IsGreatest S μ| says that $\mu$ belongs to $S$ and that no element of $S$ exceeds
+        it. So the first clause says that
+        $\mu = \max\{\, \Re\lambda : \lambda \text{ is an eigenvalue of } B \,\}$, and the second,
+        \verb|μ ∈ spectrum ℝ (reducedMatrix M (x 0))|, says that $\mu$ is an eigenvalue of the
+        real matrix $B$. A set has at most one greatest element, so the $\mu$ whose existence is
+        asserted is the number $\mu$ of the theorem.
+  \item \emph{Part~\ref{thm:main:limit}.} \verb|∃ p : ι → ℝ| introduces the vector $p^*$.
+        \verb|Tendsto f atTop (nhds p)| says that $f(t) \to p$ as $t \to \infty$, and
+        \verb|(∑ i, x t i)⁻¹ • x t| is $p(t) = x(t)/W(t)$, so the first clause says that
+        $p(t) \to p^*$. (Vectors converge when each entry does.) The remaining clauses are, in
+        order: $p^* \ge 0$; $\one^\T p^* = 1$; $p^*_i = 0$ for $i \notin R$; $M p^* = \mu p^*$;
+        and $\mu$ is an eigenvalue of $M$. The last clause is the ``in particular'' of the text,
+        stated separately.
+\end{itemize}
+
+\paragraph{Three conventions.}
+\begin{itemize}[leftmargin=2em]
+  \item \emph{Division by zero.} In Lean the inverse of $0$ is defined, and equals $0$. So the
+        formal expression for $p(t)$ makes sense for every $t$, whether or not $W(t) \ne 0$. By
+        part~\ref{thm:main:support}, $W(t) > 0$ for $t \ge 0$, so for these $t$ it is the true
+        quotient $x(t)/W(t)$; and the limit as $t \to \infty$ involves no other $t$.
+  \item \emph{Eigenvector.} The statement does not use the word. It gives $M p^* = \mu p^*$ and
+        $\one^\T p^* = 1$; the second makes $p^* \ne 0$, so $p^*$ is an eigenvector.
+  \item \emph{The size $n$.} The statement does not mention $n$. If the index set is empty,
+        there is no nonzero $x(0)$, so the hypotheses cannot be met; the theorem is about
+        $n \ge 1$, as in the text.
+\end{itemize}
+
+\subsection{Three variants of the main theorem}\label{sec:lean:variants}
+
+\lean{Main.lean} contains three further theorems. They are not in the text. Each has the
+conclusions of the main theorem and differs only in how it says that $x$ is the solution of
+$\dot{x} = Mx$. Each is derived from the main theorem.
+
+\begin{itemize}[leftmargin=2em]
+  \item \lean{tendsto_normalized_solution_of_hasDerivAt} replaces \verb|hx| by
+        \begin{center}
+        \verb|(hx : ∀ t : ℝ, 0 ≤ t → HasDerivAt x (M *ᵥ x t) t)|
+        \end{center}
+        that is, $x$ has the ordinary, two-sided derivative $M x(t)$ at every $t \ge 0$, including
+        $t = 0$. This asks more of $x$ than the main theorem does.
+  \item \lean{tendsto_normalized_solution_of_continuousOn} replaces \verb|hx| by
+        \begin{center}
+        \verb|(hc : ContinuousOn x (Set.Ici 0))| \\
+        \verb|(hx : ∀ t : ℝ, 0 < t → HasDerivAt x (M *ᵥ x t) t)|
+        \end{center}
+        that is, $x$ is continuous on $[0, \infty)$ and has derivative $M x(t)$ at every $t > 0$.
+        Nothing is assumed about a derivative at $t = 0$; the proof shows that such an $x$ has
+        the derivative from the right $M x(0)$ there. Conversely, a function that satisfies
+        \verb|hx| of the main theorem is continuous on $[0, \infty)$ and has the ordinary
+        derivative $M x(t)$ at every $t > 0$. So the two hypotheses are equivalent.
+  \item \lean{tendsto_normalized_solution_exp} has no differential equation among its hypotheses.
+        It takes a vector $x_0 \ge 0$, $x_0 \ne 0$, and states the conclusions for the function
+        $x(t) = e^{Mt} x_0$, written \verb|exp (t • M) *ᵥ x₀|.
+\end{itemize}
+
+The variants serve two purposes. First, ``$x$ is the solution on $[0, \infty)$'' can be made
+precise in more than one reasonable way, and the first two variants show that the result does not
+depend on the choice made in the main theorem. Second, a theorem whose hypotheses can never be
+met is true and says nothing. The third variant shows that this is not the case here: for every
+Metzler matrix $M$ and every nonnegative, nonzero $x_0$ there is a function $x$ that satisfies
+the hypotheses of the main theorem and has $x(0) = x_0$.
+
+\subsection{Where each part of the text is}\label{sec:lean:map}
+
+The table lists, for each part of the text, the Lean theorem or definition that formalizes it.
+The file is named in the heading of each group; a name from another file has its file in
+parentheses.
+
+% The table is set as one small table per group, so that a page break can fall between groups.
+\par\smallskip
+{\small
+\noindent\begin{tabular}{@{}p{0.36\textwidth}p{0.60\textwidth}@{}}
+\hline
+Text & Lean \\
+\hline
+\multicolumn{2}{@{}l}{\emph{Section~\ref{sec:setting}} (\lean{Defs.lean})} \\
+Metzler matrix & \lean{IsMetzler} \\
+Definition~\ref{def:reach} & \lean{Arc}, \lean{Reachable}, \lean{reachSet}, \lean{reducedMatrix} \\
+\end{tabular}\par
+\vspace{0.4ex}
+\noindent\begin{tabular}{@{}p{0.36\textwidth}p{0.60\textwidth}@{}}
+\multicolumn{2}{@{}l}{\emph{Lemma~\ref{lem:exp}} (\lean{MatrixExp.lean})} \\
+part~\ref{lem:exp:ode} & \lean{hasDerivAt_exp_smul}, \lean{exp_zero_smul} \\
+part~\ref{lem:exp:ode}, ``Hence \dots'' & \lean{eq_exp_smul_mulVec_of_hasDerivWithinAt} \\
+part~\ref{lem:exp:semigroup} & \lean{exp_add_smul} \\
+part~\ref{lem:exp:shift} & \lean{exp_smul_add_smul_one}, \lean{exp_smul_eq_cexp_smul} \\
+part~\ref{lem:exp:eig} & \lean{exp_smul_mulVec_of_mulVec_eq_smul} \\
+\end{tabular}\par
+\vspace{0.4ex}
+\noindent\begin{tabular}{@{}p{0.36\textwidth}p{0.60\textwidth}@{}}
+\multicolumn{2}{@{}l}{\emph{Lemma~\ref{lem:modes}} (\lean{Modes.lean})} \\
+the lemma & \lean{exp_smul_eq_sum_modes} \\
+$v \in G_\lambda$ & \verb|MemGenEigenspace A lam v| \\
+fact (i) & \lean{exists_genEigenspace_decomp} \\
+equation \eqref{eq:nilpotent}, with fact (ii) & \lean{MemGenEigenspace.pow_rootMultiplicity_mulVec} \\
+the exponential on $G_{\lambda_\ell}$ & \lean{exp_smul_mulVec_of_pow_mulVec_eq_zero} (\lean{MatrixExp.lean}) \\
+\end{tabular}\par
+\vspace{0.4ex}
+\noindent\begin{tabular}{@{}p{0.36\textwidth}p{0.60\textwidth}@{}}
+\multicolumn{2}{@{}l}{\emph{Lemma~\ref{lem:PF}} (\lean{PerronFrobenius.lean})} \\
+the lemma & \lean{exists_dominant_eigenvalue}, \lean{isGreatest_re_spectrum} \\
+part (i) & \lean{exp_smul_apply_nonneg} (\lean{Positivity.lean}) \\
+part (ii) & \lean{nonneg_of_mulVec_nonpos} \\
+part (iii) & \lean{le_of_mul_le_mulVec} \\
+part (iv) & \lean{norm_add_sub_mul_le_mulVec} \\
+part (v) & the proof of \lean{exists_dominant_eigenvalue} \\
+\end{tabular}\par
+\vspace{0.4ex}
+\noindent\begin{tabular}{@{}p{0.36\textwidth}p{0.60\textwidth}@{}}
+\multicolumn{2}{@{}l}{\emph{Step~1} (\lean{Positivity.lean})} \\
+$e^{Mt} \ge 0$ & \lean{exp_smul_apply_nonneg} \\
+equation \eqref{eq:pattern} & \lean{exp_smul_apply_pos}, \lean{exp_smul_apply_eq_zero} \\
+\end{tabular}\par
+\vspace{0.4ex}
+\noindent\begin{tabular}{@{}p{0.36\textwidth}p{0.60\textwidth}@{}}
+\multicolumn{2}{@{}l}{\emph{Step~2} (\lean{Main.lean})} \\
+equation \eqref{eq:support} & \lean{exp_smul_mulVec_pos}, \lean{exp_smul_mulVec_eq_zero} \\
+the total is positive & \lean{sum_exp_smul_mulVec_pos} \\
+equation \eqref{eq:noarc} & \lean{apply_eq_zero_of_mem_of_notMem} (\lean{Defs.lean}) \\
+the reduced system & \lean{restrict_exp_smul_mulVec} \\
+$B$ is Metzler & \lean{IsMetzler.reducedMatrix} (\lean{Defs.lean}) \\
+\end{tabular}\par
+\vspace{0.4ex}
+\noindent\begin{tabular}{@{}p{0.36\textwidth}p{0.60\textwidth}@{}}
+\multicolumn{2}{@{}l}{\emph{Step~3} (\lean{Modes.lean})} \\
+equation \eqref{eq:expansion} & \lean{exp_smul_eq_sum_modes_card} \\
+exponential decay beats any power of $t$ & \lean{tendsto_pow_mul_cexp_atTop_zero} \\
+equation \eqref{eq:L} & \lean{exists_leading_term_real} \\
+\end{tabular}\par
+\vspace{0.4ex}
+\noindent\begin{tabular}{@{}p{0.36\textwidth}p{0.60\textwidth}@{}}
+\multicolumn{2}{@{}l}{\emph{Steps~4 to~6} (\lean{Main.lean})} \\
+Step~4 (i) & \lean{leading_nonneg} \\
+Step~4 (ii), equation \eqref{eq:semigroup} & \lean{exp_smul_mul_leading} \\
+Step~4 (ii), equation \eqref{eq:eig} & \lean{mul_leading_eq} \\
+Step~4 (iii) and Step~5, equation \eqref{eq:q} & \lean{tendsto_normalized_of_pos} \\
+Step~6; Theorem~\ref{thm:main} & \lean{tendsto_normalized_solution} \\
+\hline
+\end{tabular}\par
+}
+\smallskip
+
+\subsection{Where the formal proof differs from the text}\label{sec:lean:differences}
+
+The formal proof follows the text step by step. It differs in the following points, none of which
+changes the argument.
+
+\begin{enumerate}[label=\textup{\arabic*.}, leftmargin=2em]
+  \item \emph{Lemma~\ref{lem:exp} is not a single formal statement.} Each part is proved in the
+        generality in which it is used. Parts~\ref{lem:exp:ode} and~\ref{lem:exp:semigroup} are
+        proved for real matrices. Part~\ref{lem:exp:shift} is proved for a real matrix and a real
+        $c$, and for a complex matrix in the form
+        $e^{At} = e^{\lambda t} e^{(A - \lambda I)t}$. Part~\ref{lem:exp:eig} is proved for
+        complex matrices. The statements about complex matrices allow $t$ to be complex.
+  \item \emph{Real and complex matrices.} The text speaks of the eigenvalues of a real matrix
+        $B$, meaning its complex eigenvalues. Lean keeps $B$ apart from the complex matrix with
+        the same entries, written \verb|B.map (algebraMap ℝ ℂ)|. Two small lemmas connect them:
+        \lean{exp_smul_map_ofReal} (the exponential of the second is that of the first, entry
+        for entry) and \lean{ofReal_mem_spectrum_map_iff} (a real number is an eigenvalue of one
+        exactly when it is an eigenvalue of the other).
+  \item \emph{Lemma~\ref{lem:modes}.} In the formal statement the sum is over
+        \verb|eigenvalues A|, the finite set of eigenvalues of $A$, and the multiplicity $m_\ell$
+        is \verb|A.charpoly.rootMultiplicity lam|, the multiplicity of $\lambda_\ell$ as a root
+        of the characteristic polynomial. The statement allows $t$ to be complex.
+  \item \emph{Lemma~\ref{lem:PF}.} The formal statement is: there is a real number $\mu$ that is
+        an eigenvalue of $B$ and such that every eigenvalue $\lambda \ne \mu$ of $B$ has
+        $\Re\lambda < \mu$. That this $\mu$ is the largest real part of an eigenvalue is the
+        separate statement \lean{isGreatest_re_spectrum}. The lemma assumes that $B$ has at least
+        one row, which the text leaves tacit. In the proof of the theorem, $B = M_{RR}$ has at
+        least one row because $S$, and hence $R$, is not empty.
+  \item \emph{The constant $c$.} Where the text suggests $c = \max_i |M_{ii}|$, the formal proof
+        takes $c = \sum_i |M_{ii}|$ (\lean{shiftConst}), in Step~1 and in the proof of
+        Lemma~\ref{lem:PF}. All that matters is that $c \ge 0$ and $M + cI \ge 0$.
+  \item \emph{Step~1.} The text describes $[P^k]_{ij}$ as a sum over sequences of indices. The
+        formal proof does not expand the power. It proves the two implications by induction: if
+        $[P^k]_{ij} \ne 0$ then $i$ is reachable from $j$, by induction on $k$
+        (\lean{reachable_of_pow_apply_ne_zero}); and if $i$ is reachable from $j$ then
+        $[P^k]_{ij} > 0$ for some $k$, by induction on the number of arcs
+        (\lean{exists_pow_apply_pos_of_reachable}).
+  \item \emph{Step~3.} The formal proof uses Lemma~\ref{lem:modes} with every inner sum running
+        over $j < m$, the coefficients with $j \ge m_\ell$ being zero; equation
+        \eqref{eq:expansion} leaves the range of $j$ unspecified. Also, the formal proof shows
+        that $L$ is real already in this step, as a limit of real numbers, where the text notes
+        it in Step~4~(i).
+  \item \emph{Step~4~(ii).} Equation \eqref{eq:semigroup} is proved for every real $s$, not only
+        for $s > 0$, and \eqref{eq:eig} is obtained by differentiating both sides at $s = 0$.
+  \item \emph{Step~5.} The formal proof of the theorem takes $\tau = 1$.
+\end{enumerate}
+
+\subsection{What Mathlib supplies}\label{sec:lean:mathlib}
+
+The formal proof takes the following from Mathlib: the matrix exponential, with its power series,
+its derivative, and the rule $e^{X + Y} = e^{X} e^{Y}$ for commuting $X$ and $Y$ (in the formal
+text, $e^{At}$ is written \verb|exp (t • A)|); the uniqueness theorem for solutions of
+differential equations with a Lipschitz right-hand side, which is what justifies the sentence
+beginning ``Hence'' in Lemma~\ref{lem:exp}\ref{lem:exp:ode}; facts (i) and (ii) about generalized
+eigenspaces, used in the proof of Lemma~\ref{lem:modes}; the Cayley--Hamilton theorem; the
+existence of an eigenvalue of a complex matrix with at least one row; and elementary analysis.
+Fact (i) is Mathlib's \lean{Module.End.iSup_maxGenEigenspace_eq_top}, which its source labels
+``Lemma~8.22(c)'' of \cite{Axler}, and fact (ii) is \lean{LinearMap.finrank_maxGenEigenspace_eq}.
+
+Two things that this version of Mathlib does not have shaped the proofs in
+Section~\ref{sec:background}.
+\begin{itemize}[leftmargin=2em]
+  \item \emph{The Perron--Frobenius theorem.} Mathlib defines irreducible and primitive matrices
+        but proves no theorem about their eigenvalues. For this reason Lemma~\ref{lem:PF} is
+        proved in full, from Step~1 and Lemma~\ref{lem:modes}, and not by reduction to
+        \cite[Theorem~8.3.1]{HJ}.
+  \item \emph{The Jordan normal form.} For this reason the proof of Lemma~\ref{lem:modes} uses
+        generalized eigenspaces and not Jordan blocks.
+\end{itemize}
+
+\subsection{What has been checked, and what has not}\label{sec:lean:checked}
+
+\begin{itemize}[leftmargin=2em]
+  \item The project compiles without errors, and no file contains \lean{sorry}, Lean's
+        placeholder for a missing proof.
+  \item The main theorem and its three variants depend on three axioms only: \lean{propext},
+        \lean{Classical.choice} and \lean{Quot.sound}. These are the standard axioms of
+        classical mathematics in Lean, and Mathlib as a whole relies on them.
+  \item The compiled files have been checked again with the program \lean{leanchecker}, which
+        passes every definition and every proof through Lean's kernel once more.
+\end{itemize}
+
+These checks establish that the formal statement of Section~\ref{sec:lean:main} is a theorem.
+They do not establish that the formal statement says what Theorem~\ref{thm:main} says. That is a
+matter of reading the definitions and the statement against Section~\ref{sec:setting}, and
+Sections~\ref{sec:lean:defs} and~\ref{sec:lean:main} are meant to make that reading possible.
+
+\section*{Contributions}
+
+The second author, Claude Fable~5.2 (Anthropic), is a large language model. Two separate
+instances of the model took part in this work. They shared no memory, and each knew of the
+other's work only through this text.
+
+The first author, Thomas M.~English, posed the problem. The proof of Theorem~\ref{thm:main} was developed in a
+dialogue between him and one instance of the model, which wrote the first draft of the text.
+
+A second instance of the model wrote the Lean formalization described in Section~\ref{sec:lean}, under the
+first author's direction. In the course of that work it rewrote the proofs of
+Lemmas~\ref{lem:modes} and~\ref{lem:PF}, so that the text and the formal proof follow the same
+argument: the proof of Lemma~\ref{lem:modes} now uses generalized eigenspaces where the original
+used the Jordan normal form, and Lemma~\ref{lem:PF} is proved in full where the original cited
+\cite[Theorem~8.3.1]{HJ}. It also wrote Section~\ref{sec:lean}.
+
+The first author directed the work throughout, decided what was to be proved and how the result
+was to be stated. He also reviewed the text, and made some minor revisions.
+Responsibility for the content of this document, and for verification that the mechanically proven formal statement says what Theorem~\ref{thm:main} says (Section~\ref{sec:lean:checked}), lies entirely with him.
+% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+% END OF LEAN NOTES
+% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+% =====================================================================
+\begin{thebibliography}{9}
+
+\bibitem{Axler}
+S.~Axler,
+\emph{Linear Algebra Done Right}, 4th ed.,
+Undergraduate Texts in Mathematics, Springer, 2024.
+
+\bibitem{HJ}
+R.~A. Horn and C.~R. Johnson,
+\emph{Matrix Analysis}, 2nd ed.,
+Cambridge University Press, Cambridge, 2013.
+
+\end{thebibliography}
+
+\end{document}
