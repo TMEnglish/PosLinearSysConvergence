@@ -1,0 +1,61 @@
+# Runs `lake comparator --paranoid` on Linux, with its sandbox on.
+#
+# Comparator checks that every theorem named in `comparator.json` has the same statement in
+# `IndependentCheck/Solution.lean` as in `IndependentCheck/Challenge.lean`, that the proofs use
+# only the permitted axioms, and that Lean's kernel and five further checkers accept them.
+# The challenge and the solution are compiled inside a `bwrap` sandbox.
+name: Comparator (sandboxed)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  comparator:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Machine
+        run: |
+          uname -srm
+          echo "processors: $(nproc)"
+          free -g | sed -n 1,2p
+          df -h /
+
+      - name: Install the sandbox (bubblewrap)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bubblewrap
+          # Ubuntu 23.10 and later restrict the namespaces that bubblewrap needs.
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+          bwrap --ro-bind / / --unshare-all true
+          bwrap --version
+
+      - name: Install Lean (elan)
+        run: |
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Toolchain, checkers and challenge file
+        run: |
+          lake --version
+          echo "in the toolchain: $(ls "$(lean --print-prefix)/bin" | tr '\n' ' ')"
+          git log -1 --format='commit %H'
+          # The challenge is byte-identical to the Lean file supplied by ChatGPT-6.2 Astra.
+          echo "ae6c53b5ed916bf1e32f95074dd19b4fedc82c8f920d7782d257954bf0b3bcc9  IndependentCheck/Challenge.lean" \
+            | sha256sum -c
+
+      - name: Download the compiled Mathlib
+        run: lake exe cache get
+
+      - name: lake comparator --paranoid (sandbox on)
+        run: lake comparator --paranoid
