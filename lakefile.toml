@@ -16,3 +16,9 @@ rev = "v4.36.0"
 
 [[lean_lib]]
 name = "PosLinearSysConvergence"
+
+# The independent check: `Challenge.lean` (statements only) and `Solution.lean` (the same
+# statements, proved from the library above). Not built by default; see `comparator.json`.
+[[lean_lib]]
+name = "IndependentCheck"
+globs = ["IndependentCheck.+"]

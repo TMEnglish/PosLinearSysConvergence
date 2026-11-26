@@ -1,0 +1,6 @@
+{
+  "challenge_module": "IndependentCheck.Challenge",
+  "solution_module": "IndependentCheck.Solution",
+  "theorem_names": ["theorem_2", "lemma_4", "lemma_5"],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
+}
