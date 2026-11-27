@@ -6,9 +6,17 @@
 # The challenge and the solution are compiled inside a `bwrap` sandbox.
 name: Comparator (sandboxed)
 
+# It runs when a push changes anything Comparator judges (not for documentation), and on request.
 on:
   push:
     branches: [main]
+    paths:
+      - '**.lean'
+      - 'lakefile.toml'
+      - 'lake-manifest.json'
+      - 'lean-toolchain'
+      - 'comparator.json'
+      - '.github/workflows/comparator.yml'
   workflow_dispatch:
 
 permissions:
