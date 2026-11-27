@@ -51,12 +51,13 @@ in a file `Check.lean` and run `lake env lean Check.lean`. The answer is `propex
 ## Independent check
 
 The results were also stated in Lean independently of this library, and the library proves that
-independent version too.
+independent version too. Section 4.9 of the text describes this check in full.
 
 * `IndependentCheck/Challenge.lean` states Theorem 2, Lemma 4 and Lemma 5 of the text, with its
   own definitions and with `sorry` in place of each proof. It was written by ChatGPT-6.2 Astra
-  (OpenAI), with reasoning effort set to `max`, working from the text with every mention of the
-  formalization removed, while this repository was private. Astra supplied a Lean file that it
+  (OpenAI), with reasoning effort set to `max`, working from an earlier version of the text with
+  every mention of the formalization removed (the file `IndependentCheck/Text given to Astra.tex`),
+  while this repository was private. Astra supplied a Lean file that it
   reported to be byte-identical to the file it had compiled, and `Challenge.lean` is
   byte-identical to the file it supplied (SHA-256
   `ae6c53b5ed916bf1e32f95074dd19b4fedc82c8f920d7782d257954bf0b3bcc9`).

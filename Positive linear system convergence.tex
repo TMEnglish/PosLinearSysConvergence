@@ -117,6 +117,8 @@ an arc from $i_{s-1}$ to $i_s$ for each $s = 1,\dots,r$. We set
 \end{definition}
 
 An arc from $j$ to $i$ means that type $j$ contributes directly to the growth of type $i$.
+Since $x(0) \ge 0$ and $x(0) \ne 0$, the set $S$ is not empty. Hence $R$ is not empty, and $B$ is
+an $m \times m$ matrix with $m = |R| \ge 1$.
 
 \begin{theorem}\label{thm:main}
 Under the standing hypotheses:
@@ -158,7 +160,8 @@ $e^{At} = \sum_{k=0}^{\infty} \frac{t^k}{k!} A^k$ converges, and:
 \end{lemma}
 
 \begin{lemma}[Entries of the matrix exponential]\label{lem:modes}
-Let $A$ be an $m \times m$ matrix with distinct eigenvalues $\lambda_1, \dots, \lambda_r \in \C$,
+Let $A$ be a real or complex $m \times m$ matrix with distinct eigenvalues
+$\lambda_1, \dots, \lambda_r \in \C$,
 where $\lambda_\ell$ has algebraic multiplicity $m_\ell$. Then there are constant matrices
 $C_{\ell,j} \in \C^{m \times m}$ such that, for all real $t$,
 \begin{equation}\label{eq:modes}
@@ -223,7 +226,8 @@ when a repeated eigenvalue has too few independent eigenvectors; if $A$ is diago
 $j = 0$ occurs.
 
 \begin{lemma}[Perron--Frobenius for Metzler matrices]\label{lem:PF}
-Let $B$ be a Metzler matrix and let $\mu$ be the largest real part of an eigenvalue of $B$. Then
+Let $B$ be an $m \times m$ Metzler matrix with $m \ge 1$, and let $\mu$ be the largest real part
+of an eigenvalue of $B$. Then
 $\mu$ is an eigenvalue of $B$, and every eigenvalue $\lambda \ne \mu$ of $B$ satisfies
 $\Re\lambda < \mu$. The eigenvalue $\mu$ itself may be repeated, and no irreducibility is assumed.
 \end{lemma}
@@ -481,7 +485,8 @@ Mathlib, and Lean accepts the formal proof. Remark~\ref{rem:roles}, Example~\ref
 the unnumbered comments between the numbered statements are commentary; they are not formalized.
 
 This section says where the formal statements are, how to read the formal statement of the
-theorem, and where the formal proof differs from the text. The Lean files are the authority: the
+theorem, and where the formal proof differs from the text. Its last subsection describes an
+independent check of the formal statements. The Lean files are the authority: the
 listings below are copied from them, and if a listing and a file ever disagree, the file is right.
 
 \subsection{The files}\label{sec:lean:files}
@@ -504,6 +509,8 @@ File & Content \\
 \end{center}
 Every name defined in these files begins with the prefix \lean{PosLinearSys.}, which is omitted
 below. So the full name of the main theorem is \lean{PosLinearSys.tendsto_normalized_solution}.
+The project has a second, small library, \lean{IndependentCheck}, of two files; it is described
+in Section~\ref{sec:lean:independent}.
 
 \subsection{The definitions}\label{sec:lean:defs}
 
@@ -790,9 +797,10 @@ changes the argument.
   \item \emph{Lemma~\ref{lem:PF}.} The formal statement is: there is a real number $\mu$ that is
         an eigenvalue of $B$ and such that every eigenvalue $\lambda \ne \mu$ of $B$ has
         $\Re\lambda < \mu$. That this $\mu$ is the largest real part of an eigenvalue is the
-        separate statement \lean{isGreatest_re_spectrum}. The lemma assumes that $B$ has at least
-        one row, which the text leaves tacit. In the proof of the theorem, $B = M_{RR}$ has at
-        least one row because $S$, and hence $R$, is not empty.
+        separate statement \lean{isGreatest_re_spectrum}. The condition $m \ge 1$ of the text is
+        the hypothesis that the type of the indices is not empty. In the proof of the theorem it
+        holds for $B = M_{RR}$ because $S$, and hence $R$, is not empty
+        (Section~\ref{sec:setting}).
   \item \emph{The constant $c$.} Where the text suggests $c = \max_i |M_{ii}|$, the formal proof
         takes $c = \sum_i |M_{ii}|$ (\lean{shiftConst}), in Step~1 and in the proof of
         Lemma~\ref{lem:PF}. All that matters is that $c \ge 0$ and $M + cI \ge 0$.
@@ -820,7 +828,8 @@ text, $e^{At}$ is written \verb|exp (t • A)|); the uniqueness theorem for solu
 differential equations with a Lipschitz right-hand side, which is what justifies the sentence
 beginning ``Hence'' in Lemma~\ref{lem:exp}\ref{lem:exp:ode}; facts (i) and (ii) about generalized
 eigenspaces, used in the proof of Lemma~\ref{lem:modes}; the Cayley--Hamilton theorem; the
-existence of an eigenvalue of a complex matrix with at least one row; and elementary analysis.
+existence of an eigenvalue of a complex $m \times m$ matrix with $m \ge 1$; and elementary
+analysis.
 Fact (i) is Mathlib's \lean{Module.End.iSup_maxGenEigenspace_eq_top}, which its source labels
 ``Lemma~8.22(c)'' of \cite{Axler}, and fact (ii) is \lean{LinearMap.finrank_maxGenEigenspace_eq}.
 
@@ -838,8 +847,8 @@ Section~\ref{sec:background}.
 \subsection{What has been checked, and what has not}\label{sec:lean:checked}
 
 \begin{itemize}[leftmargin=2em]
-  \item The project compiles without errors, and no file contains \lean{sorry}, Lean's
-        placeholder for a missing proof.
+  \item The library \lean{PosLinearSysConvergence} compiles without errors, and none of its
+        files contains \lean{sorry}, Lean's placeholder for a missing proof.
   \item The main theorem and its three variants depend on three axioms only: \lean{propext},
         \lean{Classical.choice} and \lean{Quot.sound}. These are the standard axioms of
         classical mathematics in Lean, and Mathlib as a whole relies on them.
@@ -851,6 +860,128 @@ These checks establish that the formal statement of Section~\ref{sec:lean:main} 
 They do not establish that the formal statement says what Theorem~\ref{thm:main} says. That is a
 matter of reading the definitions and the statement against Section~\ref{sec:setting}, and
 Sections~\ref{sec:lean:defs} and~\ref{sec:lean:main} are meant to make that reading possible.
+Section~\ref{sec:lean:independent} describes a further check that bears on this question.
+
+\subsection{An independent statement of the results}\label{sec:lean:independent}
+
+A second language model wrote formal statements of the results from the text alone, and the
+library was then shown to prove those statements too.
+
+\paragraph{The challenge.}
+ChatGPT-6.2 Astra (OpenAI), with its reasoning effort set to \lean{max}, was given an earlier
+version of this document, without the authors' names, without the present section, and without
+any other mention of the formalization. What it was given is the file
+\texttt{IndependentCheck/Text given to Astra.tex} of the project. It was asked to state Theorem~\ref{thm:main}, Lemma~\ref{lem:modes} and
+Lemma~\ref{lem:PF} in Lean~4.36.0 with Mathlib~v4.36.0, with definitions of its own and without
+proofs. It was told that a formal proof existed. It was not shown the Lean files, and the
+repository that holds them was private throughout its work.
+
+Astra supplied a Lean file, which it reported to be byte-identical to the file it had compiled.
+The file \lean{IndependentCheck/Challenge.lean} of the project is byte-identical to the file it
+supplied; the SHA-256 checksum of both is
+\begin{center}
+\small\texttt{ae6c53b5ed916bf1e32f95074dd19b4fedc82c8f920d7782d257954bf0b3bcc9}.
+\end{center}
+The file contains eleven definitions and three statements, named \lean{theorem_2},
+\lean{lemma_4} and \lean{lemma_5}, each with \lean{sorry} in place of its proof.
+
+In Sections~\ref{sec:setting}--\ref{sec:proof} the present text differs from that file by three
+additions, which say what Astra pointed out had been left unsaid: the words ``real or complex''
+in Lemma~\ref{lem:modes}, the condition $m \ge 1$ in Lemma~\ref{lem:PF}, and the remark after
+Definition~\ref{def:reach} that $S$ and $R$ are not empty.
+
+\paragraph{Scrutiny of the challenge.}
+Before any comparison was made, the second author examined that file.
+\begin{itemize}[leftmargin=2em]
+  \item It compiles under the versions named above, with three warnings, one for each
+        \lean{sorry}, and no other message.
+  \item It consists of definitions and statements only.
+  \item Each of the three statements was read against the text, clause by clause, and each was
+        found to be faithful to it.
+  \item Its formulations are Astra's own. The indices are $0, \dots, n-1$. An eigenvalue of a
+        real matrix is a complex number that has a nonzero complex eigenvector, where
+        Section~\ref{sec:lean:main} uses the spectrum of the matrix over $\C$. In
+        Lemma~\ref{lem:modes} the list $\lambda_1, \dots, \lambda_r$ and the multiplicities
+        $m_\ell$ are given, with the hypotheses that the $\lambda_\ell$ are distinct, that they
+        are exactly the eigenvalues of $A$, and that $m_\ell$ is the multiplicity of
+        $\lambda_\ell$ as a root of the characteristic polynomial. In Lemma~\ref{lem:PF} the
+        number $\mu$ is given, with the hypothesis that it is the largest real part of an
+        eigenvalue of $B$.
+  \item The hypotheses of the three statements can be met, so none of them holds vacuously.
+        This is proved in Lean: for every Metzler matrix $M$ and every nonnegative, nonzero
+        $x_0$, the function $t \mapsto e^{Mt} x_0$ satisfies the standing hypotheses as Astra
+        states them; every complex square matrix has a list of eigenvalues and multiplicities of
+        the kind Lemma~\ref{lem:modes} assumes; and every real $m \times m$ matrix with $m \ge 1$
+        has a largest real part among its eigenvalues.
+\end{itemize}
+
+\paragraph{The comparison.}
+The file \lean{IndependentCheck/Solution.lean} repeats the definitions and the statements of the
+challenge, and proves each statement from a theorem of the library:
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\hline
+Statement of the challenge & Proved from \\
+\hline
+\lean{theorem_2} & \lean{tendsto_normalized_solution} \\
+\lean{lemma_4} & \lean{exp_smul_eq_sum_modes} \\
+\lean{lemma_5} & \lean{exists_dominant_eigenvalue} \\
+\hline
+\end{tabular}
+\end{center}
+It also contains the proofs that the hypotheses can be met.
+
+Whether the solution proves what the challenge states was decided by Comparator, in the form
+built into Lake, the build tool of Lean (the command \verb|lake comparator|, in Lake~5.0.0 with
+Lean~4.36.0). Comparator compiles the challenge and the solution itself, inside a sandbox, so
+that neither file can interfere with the judgment. It then establishes that every named theorem
+of the solution proves the same statement as the challenge, that the proofs use no axiom outside
+a permitted list, here \lean{propext}, \lean{Quot.sound} and \lean{Classical.choice}, and that
+Lean's kernel accepts them.
+
+Comparator was run as \verb|lake comparator --paranoid|, with its sandbox, on a Linux machine
+provided by GitHub (x86-64, with version 0.9.0 of the sandboxing program \lean{bubblewrap}), on
+26~November 2026. With the option \verb|--paranoid| the solution must be accepted by five further
+proof checkers that come with Lean~4.36.0, as well as by Lean's kernel. Comparator exports the
+three theorems, with everything they depend on, to a file of about 51,000 declarations, and
+passes that file to each checker:
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\hline
+Checker & Invoked as \\
+\hline
+Lean's kernel, in its paranoid mode & \verb|leanchecker-paranoid --silent --from-export| \\
+lean4lean & \verb|lean4lean --import| \\
+nanoda & \verb|nanoda_bin| \\
+con-leche & \verb|con-leche| \\
+con-ron & \verb|con-ron| \\
+Lean's kernel & (always applied; no option needed) \\
+\hline
+\end{tabular}
+\end{center}
+All six accepted the solution, and so Comparator accepted it.
+
+The run judged the files of the repository
+\begin{center}
+\url{https://github.com/TMEnglish/PosLinearSysConvergence}
+\end{center}
+at the commit
+\begin{center}
+\small\texttt{72efe874b5078856a07afd5e933a8e4f28834055},
+\end{center}
+and began by verifying the checksum of the challenge given above. A commit identifier fixes the
+content of every file, so the verdict applies to the present Lean files exactly if none of them,
+and no build setting, has changed since that commit; the file \lean{README.md} of the repository
+gives the command that shows this. The repository is set up to repeat the run whenever one of
+those files changes, and anyone can repeat it on a Linux machine.
+
+\paragraph{What this establishes.}
+The three statements of the challenge are theorems. They were written by a different model,
+which worked from the text and was not shown the library, and the library's own theorems imply
+them. This is strong evidence that what the library proves is what
+Theorem~\ref{thm:main}, Lemma~\ref{lem:modes} and Lemma~\ref{lem:PF} say. It is not a proof of
+that: whether a formal statement says what the text says remains a matter of reading, for the
+challenge as for the library.
 
 \section*{Contributions}
 
@@ -871,6 +1002,11 @@ used the Jordan normal form, and Lemma~\ref{lem:PF} is proved in full where the 
 The first author directed the work throughout, decided what was to be proved and how the result
 was to be stated. He also reviewed the text, and made some minor revisions.
 Responsibility for the content of this document, and for verification that the mechanically proven formal statement says what Theorem~\ref{thm:main} says (Section~\ref{sec:lean:checked}), lies entirely with him.
+
+\section*{Acknowledgement}
+
+The independent formal statements of Section~\ref{sec:lean:independent} were written by
+ChatGPT-6.2 Astra (OpenAI).
 % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 % END OF LEAN NOTES
 % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

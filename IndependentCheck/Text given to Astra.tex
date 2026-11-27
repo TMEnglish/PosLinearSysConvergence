@@ -1,0 +1,442 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+
+% ---------- theorem-like environments ----------
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ---------- macros ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\T}{\top}
+\renewcommand{\Re}{\operatorname{Re}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\cbar}{\bar{c}}
+
+\setlist[enumerate,1]{label=\textup{(\alph*)}, leftmargin=2.2em}
+
+\title{Convergence of the normalized state vector \\ in the positive linear system $\dot{x} = Mx$}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\noindent
+Let $M$ be a Metzler matrix and let $x(t)$ solve $\dot{x} = Mx$ from a nonnegative, nonzero
+initial state. These notes prove that the normalized solution $x(t)/\sum_i x_i(t)$ converges to a
+nonnegative eigenvector of $M$, with no irreducibility assumption
+(Theorem~\ref{thm:main}).
+
+% =====================================================================
+\section{Setting and main result}\label{sec:setting}
+% =====================================================================
+
+\paragraph{Notation.}
+For a real vector or matrix $A$ we write $A \ge 0$ if every entry of $A$ is nonnegative, and
+$A \gg 0$ if every entry is positive. $I$ is the identity matrix, $\one$ is the column vector of
+ones (of the appropriate dimension), and $e_j$ is the $j$th standard basis vector. For an index set $R \subseteq \{1,\dots,n\}$,
+$x_R = (x_i)_{i \in R}$ is the corresponding subvector of $x$, and $M_{RR} = (M_{ij})_{i,j \in R}$
+is the corresponding principal submatrix of $M$; in both, the indices of $R$ are kept in ascending
+order. Eigenvalues may be complex, and $\Re\lambda$ is
+the real part of $\lambda$.
+
+\paragraph{Standing hypotheses.}
+$M$ is a real $n \times n$ matrix with $M_{ij} \ge 0$ whenever $i \ne j$ (a \emph{Metzler} matrix).
+The initial state $x(0) \in \R^n$ satisfies $x(0) \ge 0$ and $x(0) \ne 0$, and $x(t)$, $t \ge 0$,
+is the solution of $\dot{x} = Mx$. We write
+\[
+  W(t) = \sum_{i=1}^n x_i(t) = \one^\T x(t),
+  \qquad
+  p(t) = \frac{x(t)}{W(t)} .
+\]
+If $x_i$ is the abundance of type $i$, then $W$ is the total population and $p$ is the vector of
+type frequencies.
+
+\begin{definition}[Reachability]\label{def:reach}
+There is an \emph{arc} from $j$ to $i$ if $i \ne j$ and $M_{ij} > 0$. Index $i$ is
+\emph{reachable from} $j$ if $i = j$, or if there are indices $j = i_0, i_1, \dots, i_r = i$ with
+an arc from $i_{s-1}$ to $i_s$ for each $s = 1,\dots,r$. We set
+\begin{align*}
+  S &= \{\, j : x_j(0) > 0 \,\} && \text{(the support of the initial state),}\\
+  R &= \{\, i : i \text{ is reachable from some } j \in S \,\} && \text{(the reachable set; } S \subseteq R\text{),}\\
+  B &= M_{RR} && \text{(the matrix of the reduced system).}
+\end{align*}
+\end{definition}
+
+An arc from $j$ to $i$ means that type $j$ contributes directly to the growth of type $i$.
+
+\begin{theorem}\label{thm:main}
+Under the standing hypotheses:
+\begin{enumerate}
+  \item\label{thm:main:support} For every $t > 0$, $x_i(t) > 0$ if $i \in R$; and $x_i(t) = 0$ for
+        all $t \ge 0$ if $i \notin R$. In particular $W(t) > 0$ for all $t \ge 0$, so $p(t)$ is
+        well defined.
+  \item\label{thm:main:mu} The number
+        $\mu = \max\{\, \Re\lambda : \lambda \text{ is an eigenvalue of } B \,\}$
+        is itself an eigenvalue of $B$; in particular it is real.
+  \item\label{thm:main:limit} The limit $p^* = \lim_{t \to \infty} p(t)$ exists, and
+        \[
+          p^* \ge 0, \qquad \one^\T p^* = 1, \qquad p^*_i = 0 \ \text{ for } i \notin R,
+          \qquad M p^* = \mu\, p^* .
+        \]
+        In particular $\mu$ is an eigenvalue of $M$, with the nonnegative eigenvector $p^*$.
+\end{enumerate}
+\end{theorem}
+
+The eigenvalue $\mu$ belongs to the reduced matrix $B$. It need not be the eigenvalue of $M$ with
+the largest real part (Example~\ref{ex:reduction}).
+
+% =====================================================================
+\section{Background}\label{sec:background}
+% =====================================================================
+
+The proof uses three standard facts.
+
+\begin{lemma}[The matrix exponential]\label{lem:exp}
+For a real or complex square matrix $A$ and real $t$, the series
+$e^{At} = \sum_{k=0}^{\infty} \frac{t^k}{k!} A^k$ converges, and:
+\begin{enumerate}
+  \item\label{lem:exp:ode} $\frac{d}{dt} e^{At} = A e^{At}$ and $e^{A \cdot 0} = I$. Hence the
+        solution of $\dot{x} = Ax$ with initial value $x(0)$ is $x(t) = e^{At} x(0)$.
+  \item\label{lem:exp:semigroup} $e^{A(s+t)} = e^{As} e^{At}$ for all real $s$, $t$.
+  \item\label{lem:exp:shift} $e^{(A + cI)t} = e^{ct} e^{At}$ for every scalar $c \in \C$.
+  \item\label{lem:exp:eig} If $Au = \lambda u$ with $\lambda \in \C$, then $e^{At} u = e^{\lambda t} u$.
+\end{enumerate}
+\end{lemma}
+
+\begin{lemma}[Entries of the matrix exponential]\label{lem:modes}
+Let $A$ be an $m \times m$ matrix with distinct eigenvalues $\lambda_1, \dots, \lambda_r \in \C$,
+where $\lambda_\ell$ has algebraic multiplicity $m_\ell$. Then there are constant matrices
+$C_{\ell,j} \in \C^{m \times m}$ such that, for all real $t$,
+\begin{equation}\label{eq:modes}
+  e^{At} = \sum_{\ell=1}^{r} \sum_{j=0}^{m_\ell - 1} t^{j} e^{\lambda_\ell t}\, C_{\ell,j} .
+\end{equation}
+In words: every entry of $e^{At}$ is a finite sum of terms $c\, t^{j} e^{\lambda t}$, with
+$\lambda$ an eigenvalue of $A$ and $j$ smaller than the multiplicity of $\lambda$.
+\end{lemma}
+
+\begin{proof}
+For $\lambda \in \C$ let
+\[
+  G_\lambda = \{\, v \in \C^{m} : (A - \lambda I)^{k} v = 0 \text{ for some } k \ge 0 \,\}
+\]
+be the \emph{generalized eigenspace} of $\lambda$. It is a subspace of $\C^{m}$ that $A$ maps into
+itself, and it is not $\{0\}$ exactly when $\lambda$ is an eigenvalue of $A$. We use two standard
+facts about generalized eigenspaces
+(see, e.g., \cite[Chapter~8]{Axler}):
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item every vector of $\C^{m}$ is a sum $v_1 + \dots + v_r$ with $v_\ell \in G_{\lambda_\ell}$
+        for each $\ell$;
+  \item the dimension of $G_{\lambda_\ell}$ is the algebraic multiplicity $m_\ell$, that is, the
+        multiplicity of $\lambda_\ell$ as a root of the characteristic polynomial of $A$.
+\end{enumerate}
+
+\emph{The power $m_\ell$ of $A - \lambda_\ell I$ vanishes on $G_{\lambda_\ell}$.} The matrix
+$N = A - \lambda_\ell I$ maps $G_{\lambda_\ell}$ into itself, and some power of $N$ vanishes on
+$G_{\lambda_\ell}$: take a power that kills every vector of a basis. So the restriction of $N$ to
+$G_{\lambda_\ell}$ is nilpotent. Its characteristic polynomial is therefore $z^{d}$, where $d$ is
+the dimension of $G_{\lambda_\ell}$, and by the Cayley--Hamilton theorem $N^{d}$ vanishes on
+$G_{\lambda_\ell}$. By (ii), $d = m_\ell$. Hence
+\begin{equation}\tag{$\ast$}\label{eq:nilpotent}
+  (A - \lambda_\ell I)^{m_\ell}\, v = 0 \qquad \text{for every } v \in G_{\lambda_\ell} .
+\end{equation}
+
+\emph{The exponential on $G_{\lambda_\ell}$.} Let $v \in G_{\lambda_\ell}$. By
+Lemma~\ref{lem:exp}\ref{lem:exp:shift}, $e^{At} = e^{\lambda_\ell t}\, e^{(A - \lambda_\ell I)t}$.
+Apply the series for $e^{(A - \lambda_\ell I)t}$ to $v$; by \eqref{eq:nilpotent} the terms with
+$j \ge m_\ell$ vanish, so
+\[
+  e^{At} v = e^{\lambda_\ell t} \sum_{j=0}^{m_\ell - 1} \frac{t^{j}}{j!}\, (A - \lambda_\ell I)^{j} v .
+\]
+
+\emph{The columns of $e^{At}$.} By (i), write the $b$th standard basis vector as
+$e_b = v_{b,1} + \dots + v_{b,r}$ with $v_{b,\ell} \in G_{\lambda_\ell}$. The $b$th column of
+$e^{At}$ is
+\[
+  e^{At} e_b = \sum_{\ell=1}^{r} \sum_{j=0}^{m_\ell - 1} t^{j} e^{\lambda_\ell t}\,
+  \frac{1}{j!}\, (A - \lambda_\ell I)^{j} v_{b,\ell} .
+\]
+This is \eqref{eq:modes}, with $C_{\ell,j}$ the matrix whose $b$th column is
+$\frac{1}{j!} (A - \lambda_\ell I)^{j} v_{b,\ell}$, for $b = 1, \dots, m$.
+\end{proof}
+
+For example, $A = \begin{bmatrix} 1 & 1 \\ 0 & 1 \end{bmatrix}$ gives
+$e^{At} = \begin{bmatrix} e^{t} & t e^{t} \\ 0 & e^{t} \end{bmatrix}$. Powers of $t$ occur only
+when a repeated eigenvalue has too few independent eigenvectors; if $A$ is diagonalizable, only
+$j = 0$ occurs.
+
+\begin{lemma}[Perron--Frobenius for Metzler matrices]\label{lem:PF}
+Let $B$ be a Metzler matrix and let $\mu$ be the largest real part of an eigenvalue of $B$. Then
+$\mu$ is an eigenvalue of $B$, and every eigenvalue $\lambda \ne \mu$ of $B$ satisfies
+$\Re\lambda < \mu$. The eigenvalue $\mu$ itself may be repeated, and no irreducibility is assumed.
+\end{lemma}
+
+\begin{proof}
+For real vectors $u$ and $v$ we write $u \ge v$ if $u - v \ge 0$, and $u \le 0$ if $-u \ge 0$. For
+a complex vector $z$, $|z|$ is the real vector with entries $|z_i|$.
+
+\emph{\textup{(i)} If $A$ is a Metzler matrix, then $e^{At} \ge 0$ for $t \ge 0$.} Choose
+$c \ge 0$ with $P = A + cI \ge 0$. By Lemma~\ref{lem:exp}\ref{lem:exp:shift},
+$e^{At} = e^{-ct} e^{Pt} = e^{-ct} \sum_{k=0}^{\infty} \frac{t^{k}}{k!} P^{k}$, and every power
+$P^{k}$ is a nonnegative matrix. (Step~1 of Section~\ref{sec:proof} repeats this argument and
+refines it.)
+
+\emph{\textup{(ii)} Inverse positivity.} Let $A$ be a Metzler matrix all of whose eigenvalues have
+negative real part, and let $d$ be a real vector with $Ad \le 0$. Then $d \ge 0$.
+
+To see this, put $\psi(t) = e^{At} d$. Since $A$ commutes with $e^{At}$,
+Lemma~\ref{lem:exp}\ref{lem:exp:ode} gives $\dot{\psi}(t) = e^{At} A d$, and by (i) this vector is
+$\le 0$ for $t \ge 0$. So every entry of $\psi$ is nonincreasing on $[0, \infty)$. By
+Lemma~\ref{lem:modes}, every entry of $e^{At}$ is a sum of terms $a\, t^{j} e^{\lambda t}$ with
+$\Re\lambda < 0$. Each such term tends to $0$ as $t \to \infty$, because its modulus is
+$|a|\, t^{j} e^{(\Re\lambda) t}$ and exponential decay beats any power of $t$. Hence
+$\psi(t) \to 0$. A nonincreasing function on $[0, \infty)$ that tends to $0$ is nonnegative, so
+$d = \psi(0) \ge 0$.
+
+\emph{\textup{(iii)} A comparison.} Let $\sigma$ be a real number with $\Re\lambda \le \sigma$ for
+every eigenvalue $\lambda$ of $B$. Suppose that $Bw \ge r w$ for a real number $r$ and a real
+vector $w \ge 0$ with $w \ne 0$. Then $r \le \sigma$.
+
+Suppose instead that $r > \sigma$. The matrix $A = B - rI$ is Metzler, and its eigenvalues are the
+numbers $\lambda - r$ with $\lambda$ an eigenvalue of $B$, so they have negative real part. Also
+$A(-w) = -(Bw - rw) \le 0$. By (ii), $-w \ge 0$. With $w \ge 0$ this gives $w = 0$, a
+contradiction.
+
+\emph{\textup{(iv)} Moduli of an eigenvector.} Let $Bz = \lambda z$ with $\lambda \in \C$ and $z$
+a complex vector, and choose $c \ge 0$ with $P = B + cI \ge 0$. Then $Pz = (\lambda + c) z$, so for
+every index $i$
+\[
+  |\lambda + c|\, |z_i| = \Bigl| \sum_{j} P_{ij} z_j \Bigr| \le \sum_{j} P_{ij}\, |z_j|
+  = (B|z|)_i + c\, |z_i| .
+\]
+That is, $B|z| \ge (|\lambda + c| - c)\, |z|$.
+
+\emph{\textup{(v)} Conclusion.} Let $\lambda$ be an eigenvalue of $B$ with $\Re\lambda = \mu$, and
+let $z \ne 0$ be an eigenvector for it. The vector $|z| \ge 0$ is not zero, so (iv) and (iii), with
+$\sigma = \mu$, $w = |z|$ and $r = |\lambda + c| - c$, give $|\lambda + c| - c \le \mu$. Hence
+\[
+  |\lambda + c| \le \mu + c = \Re(\lambda + c) .
+\]
+A complex number whose modulus is at most its real part is real. So $\lambda$ is real, that is,
+$\lambda = \mu$. By the definition of $\mu$, some eigenvalue of $B$ has real part $\mu$; we have
+just seen that it equals $\mu$. So $\mu$ is an eigenvalue of $B$, and it is the only eigenvalue
+with real part $\mu$: every other eigenvalue has real part less than $\mu$.
+\end{proof}
+
+Lemma~\ref{lem:PF} is the form, for Metzler matrices, of the classical theorem that the spectral
+radius of a nonnegative matrix is an eigenvalue of that matrix
+\cite[Theorem~8.3.1]{HJ}. It also follows from that theorem, applied to $P = B + cI$.
+
+% =====================================================================
+\section{Proof of Theorem~\ref{thm:main}}\label{sec:proof}
+% =====================================================================
+
+\subsection*{Step 1. $e^{Mt}$ is nonnegative, and reachability decides which entries are positive}
+
+Choose $c \ge 0$ with $P = M + cI \ge 0$; for instance $c = \max_i |M_{ii}|$. By
+Lemma~\ref{lem:exp}\ref{lem:exp:shift},
+\[
+  e^{Mt} = e^{-ct} e^{Pt} = e^{-ct} \sum_{k=0}^{\infty} \frac{t^{k}}{k!} P^{k} .
+\]
+Every power $P^k$ is a nonnegative matrix, so $e^{Mt} \ge 0$ for $t \ge 0$. Moreover, for $t > 0$
+the $(i,j)$ entry of $e^{Mt}$ is positive if $[P^k]_{ij} > 0$ for at least one $k \ge 0$, and it is
+zero for all $t \ge 0$ if $[P^k]_{ij} = 0$ for every $k \ge 0$.
+
+For $k \ge 1$, the entry $[P^k]_{ij}$ is the sum, over all sequences of indices $j = i_0, i_1, \dots, i_k = i$,
+of the products
+\[
+  P_{i_k i_{k-1}} \cdots P_{i_2 i_1} P_{i_1 i_0} .
+\]
+These products are nonnegative, so the sum is positive exactly when some sequence has every factor
+positive. In such a sequence each step
+either stays put ($i_s = i_{s-1}$, a diagonal entry of $P$) or follows an arc
+($i_s \ne i_{s-1}$ and $M_{i_s i_{s-1}} > 0$, since $P$ and $M$ have the same off-diagonal
+entries). Deleting the steps that stay put shows that $i$ is reachable from $j$. Conversely, if $i$
+is reachable from $j$ along $k \ge 1$ arcs then $[P^k]_{ij} > 0$, and the case $i = j$ is covered by
+$P^0 = I$. Therefore, for every $t > 0$,
+\begin{equation}\label{eq:pattern}
+  [e^{Mt}]_{ij} > 0 \ \text{ if $i$ is reachable from $j$,}
+  \qquad
+  [e^{Mt}]_{ij} = 0 \ \text{ otherwise.}
+\end{equation}
+
+\subsection*{Step 2. Only the reachable indices matter}
+
+Since $x(t) = e^{Mt} x(0)$ and $x_j(0) = 0$ for $j \notin S$,
+\[
+  x_i(t) = \sum_{j \in S} [e^{Mt}]_{ij}\, x_j(0) ,
+\]
+a sum of nonnegative terms. If $i \in R$, some $j \in S$ has $i$ reachable from $j$, and by
+\eqref{eq:pattern} the corresponding term is positive for $t > 0$. If $i \notin R$, every term is
+zero. Hence, for every $t > 0$,
+\begin{equation}\label{eq:support}
+  x_i(t) > 0 \ \text{ if } i \in R,
+  \qquad
+  x_i(t) = 0 \ \text{ if } i \notin R,
+\end{equation}
+and $x_i(t) = 0$ for all $t \ge 0$ when $i \notin R$. Three consequences follow.
+
+\begin{itemize}[leftmargin=2em]
+  \item \emph{The total is positive.} $W(0) > 0$ because $x(0) \ge 0$ is nonzero, and $W(t) > 0$
+        for $t > 0$ by \eqref{eq:support}. This proves
+        part~\ref{thm:main:support} of the theorem.
+  \item \emph{No arc leaves $R$.} If $j \in R$ and $i \notin R$, then
+        \begin{equation}\label{eq:noarc}
+          M_{ij} = 0 ,
+        \end{equation}
+        because otherwise $i$ would be reachable from $j$, and hence from $S$.
+  \item \emph{The reduced system.} Put $y(t) = x_R(t)$. For $i \in R$,
+        $\dot{x}_i = \sum_{j} M_{ij} x_j = \sum_{j \in R} M_{ij} x_j$, because $x_j \equiv 0$ for
+        $j \notin R$. Hence
+        \[
+          \dot{y} = By, \qquad y(t) = e^{Bt} y(0), \qquad y(t) \gg 0 \ \text{ for every } t > 0 .
+        \]
+        The matrix $B$ is Metzler, because its off-diagonal entries are off-diagonal entries of $M$.
+\end{itemize}
+
+\subsection*{Step 3. The leading term of $e^{Bt}$}
+
+Apply Lemma~\ref{lem:PF} to $B$. This proves part~\ref{thm:main:mu} of the theorem, and shows that
+every eigenvalue $\lambda \ne \mu$ of $B$ has $\Re\lambda < \mu$. Apply Lemma~\ref{lem:modes} to
+$B$ and write $C_j$ for the coefficient matrix of $t^{j} e^{\mu t}$:
+\begin{equation}\label{eq:expansion}
+  e^{Bt} = \sum_{j} t^{j} e^{\mu t}\, C_j
+  \;+\; \sum_{\lambda \ne \mu} \sum_{j} t^{j} e^{\lambda t}\, C_{\lambda,j} .
+\end{equation}
+
+\emph{Some $C_j$ is nonzero.} Take $u \ne 0$ with $Bu = \mu u$. By
+Lemma~\ref{lem:exp}\ref{lem:exp:eig}, $e^{-\mu t} e^{Bt} u = u$ for all $t$. If every $C_j$ were
+zero, then by \eqref{eq:expansion} each entry of $e^{-\mu t} e^{Bt}$ would be a sum of terms
+$c\, t^{j} e^{(\lambda - \mu)t}$ with $\Re\lambda < \mu$. Each such term tends to $0$ as
+$t \to \infty$, because its modulus is $|c|\, t^{j} e^{-(\mu - \Re\lambda)t}$ and exponential decay
+beats any power of $t$. This would give $u = 0$, a contradiction.
+
+\emph{Definition of $k$ and $L$.} Let $k$ be the largest $j$ with $C_j \ne 0$, and put $L = C_k$.
+Divide \eqref{eq:expansion} by $t^{k} e^{\mu t}$. Every term other than $L$ carries a factor
+$t^{j-k}$ with $j < k$, or a factor $t^{j-k} e^{(\lambda - \mu)t}$ with $\Re\lambda < \mu$; both
+tend to $0$. Therefore
+\begin{equation}\label{eq:L}
+  \lim_{t \to \infty} \frac{e^{Bt}}{t^{k} e^{\mu t}} = L \ne 0 .
+\end{equation}
+The fastest-growing terms of $e^{Bt}$ grow like $t^{k} e^{\mu t}$, and $L$ holds their
+coefficients. Both $k$ and $L$ depend only on $B$.
+
+\subsection*{Step 4. $L$ is nonnegative, and its nonzero columns are eigenvectors}
+
+\emph{\textup{(i)} $L \ge 0$.} By Step~1 applied to the Metzler matrix $B$, $e^{Bt} \ge 0$; and
+$t^{k} e^{\mu t} > 0$ for $t > 0$. A limit of nonnegative matrices is nonnegative; in particular
+$L$ is real.
+
+\emph{\textup{(ii)} $BL = \mu L$.} Fix $s > 0$. Since $e^{Bs} e^{Bt} = e^{B(s+t)}$ by
+Lemma~\ref{lem:exp}\ref{lem:exp:semigroup},
+\[
+  e^{Bs} \cdot \frac{e^{Bt}}{t^{k} e^{\mu t}}
+  \;=\;
+  \frac{(s+t)^{k} e^{\mu(s+t)}}{t^{k} e^{\mu t}}
+  \cdot
+  \frac{e^{B(s+t)}}{(s+t)^{k} e^{\mu(s+t)}} .
+\]
+Let $t \to \infty$. The left side tends to $e^{Bs} L$ by \eqref{eq:L}. On the right, the first
+factor equals $(1 + s/t)^{k} e^{\mu s}$ and tends to $e^{\mu s}$, and the second factor tends to
+$L$ by \eqref{eq:L}. Hence
+\begin{equation}\label{eq:semigroup}
+  e^{Bs} L = e^{\mu s} L \qquad \text{for every } s > 0 .
+\end{equation}
+Subtract $L$ from both sides and divide by $s$:
+\[
+  \frac{e^{Bs} - I}{s}\, L = \frac{e^{\mu s} - 1}{s}\, L .
+\]
+As $s \to 0^{+}$ the left side tends to $BL$, because
+$\frac{d}{ds} e^{Bs} \big|_{s=0} = B$ by Lemma~\ref{lem:exp}\ref{lem:exp:ode}, and the right side
+tends to $\mu L$. Therefore
+\begin{equation}\label{eq:eig}
+  BL = \mu L .
+\end{equation}
+Consequently, for every vector $z$ we have $B(Lz) = \mu\,(Lz)$: the vector $Lz$ is either zero or
+an eigenvector of $B$ for the eigenvalue $\mu$.
+
+\emph{\textup{(iii)} If $z \gg 0$, then $Lz \ne 0$.} By \eqref{eq:L} and (i), some entry $L_{ij}$
+is positive. Then $(Lz)_i = \sum_{l} L_{il} z_l \ge L_{ij} z_j > 0$.
+
+\subsection*{Step 5. The limit for the reduced system}
+
+Fix any $\tau > 0$ and put $z = y(\tau)$; by Step~2, $z \gg 0$. For $t > 0$,
+Lemma~\ref{lem:exp}\ref{lem:exp:semigroup} gives $y(\tau + t) = e^{Bt} z$, so by \eqref{eq:L}
+\[
+  \frac{y(\tau + t)}{t^{k} e^{\mu t}} \;\longrightarrow\; v := Lz
+  \qquad (t \to \infty).
+\]
+By Step~4, $v \ge 0$, $v \ne 0$ and $Bv = \mu v$. Summing the entries,
+$\one^\T y(\tau + t) / (t^{k} e^{\mu t}) \to \one^\T v > 0$. Dividing the two limits, which is
+legitimate because the limit of the denominator is not zero,
+\begin{equation}\label{eq:q}
+  \frac{y(t)}{\one^\T y(t)} \;\longrightarrow\; q := \frac{v}{\one^\T v}
+  \qquad (t \to \infty),
+  \qquad\text{with}\quad q \ge 0, \quad \one^\T q = 1, \quad Bq = \mu q .
+\end{equation}
+
+\subsection*{Step 6. Back to the full system}
+
+By \eqref{eq:support}, $W(t) = \one^\T y(t)$. Hence $p_R(t) = y(t)/\one^\T y(t)$, and $p_i(t) = 0$
+for $i \notin R$. By \eqref{eq:q}, $p(t) \to p^*$, where $p^*_R = q$ and $p^*_i = 0$ for
+$i \notin R$. So $p^* \ge 0$ and $\one^\T p^* = 1$.
+
+It remains to check $M p^* = \mu p^*$. For any $i$, $(M p^*)_i = \sum_{j \in R} M_{ij} q_j$.
+If $i \in R$, this is $(Bq)_i = \mu q_i = \mu p^*_i$. If $i \notin R$, every $M_{ij}$ in the sum is
+zero by \eqref{eq:noarc}, so $(M p^*)_i = 0 = \mu p^*_i$. This proves
+part~\ref{thm:main:limit}. \qed
+
+\begin{remark}[What each hypothesis does]\label{rem:roles}
+The Metzler property is used in four places. It gives $e^{Mt} \ge 0$ and, because sums of
+nonnegative products cannot cancel, the exact positivity pattern \eqref{eq:pattern} (Step~1). It
+makes the absence of an arc from $j$ to $i$ mean $M_{ij} = 0$, which is \eqref{eq:noarc} (Step~2).
+It makes the eigenvalue of largest real part real and strictly dominant, so that the leading term
+of $e^{Bt}$ does not oscillate (Lemma~\ref{lem:PF}, Step~3). And it gives $L \ge 0$ (Step~4). Strict positivity of
+$y(\tau)$ is used once, in Step~5, to guarantee $L y(\tau) \ne 0$. In a general linear system both
+can fail: nonreal eigenvalues cause persistent oscillation in the direction of the solution when
+they contribute to its leading term, and an initial state can have no component along the leading
+term of the matrix exponential. The reduction to $R$ is what supplies strict positivity. Applied
+to the full matrix $M$, the argument would fail: in Example~\ref{ex:reduction} the leading
+coefficient matrix of $e^{Mt}$ annihilates $x(0)$, and the solution grows at a rate smaller than
+the largest eigenvalue of $M$.
+\end{remark}
+
+\begin{example}[The reduction to $R$ is needed]\label{ex:reduction}
+Let $M = \begin{bmatrix} 1 & 0 \\ 0 & 2 \end{bmatrix}$. For $x(0) = (1, 0)^\T$ we get $R = \{1\}$,
+$B = [\,1\,]$, $\mu = 1$ and $p(t) = e_1$ for all $t$, although the dominant eigenvalue of $M$ is
+$2$. For $x(0) \gg 0$ we get $R = \{1,2\}$, $\mu = 2$ and $p^* = e_2$.
+\end{example}
+
+
+% =====================================================================
+\begin{thebibliography}{9}
+
+\bibitem{Axler}
+S.~Axler,
+\emph{Linear Algebra Done Right}, 4th ed.,
+Undergraduate Texts in Mathematics, Springer, 2024.
+
+\bibitem{HJ}
+R.~A. Horn and C.~R. Johnson,
+\emph{Matrix Analysis}, 2nd ed.,
+Cambridge University Press, Cambridge, 2013.
+
+\end{thebibliography}
+
+\end{document}
