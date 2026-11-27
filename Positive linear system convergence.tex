@@ -76,6 +76,8 @@ Let $M$ be a Metzler matrix and let $x(t)$ solve $\dot{x} = Mx$ from a nonnegati
 initial state. These notes prove that the normalized solution $x(t)/\sum_i x_i(t)$ converges to a
 nonnegative eigenvector of $M$, with no irreducibility assumption
 (Theorem~\ref{thm:main}).
+The convergence itself is not new: in the language of Markov chains it goes back to
+Mandl~\cite{Mandl59,Mandl60}, as Section~\ref{sec:related} explains.
 % LEAN NOTES: the next sentence.
 The proof has been formalized in the proof assistant Lean; Section~\ref{sec:lean} describes the
 formalization.
@@ -470,6 +472,307 @@ $B = [\,1\,]$, $\mu = 1$ and $p(t) = e_1$ for all $t$, although the dominant eig
 $2$. For $x(0) \gg 0$ we get $R = \{1,2\}$, $\mu = 2$ and $p^* = e_2$.
 \end{example}
 
+% =====================================================================
+\section{Related work}\label{sec:related}
+% =====================================================================
+
+The convergence proved above is not new. This section says where it can be found, and how we
+came to find it only after the proof had been written. It is the record of a search, not a
+survey of the literature.
+
+\subsection{The frequency equation}\label{sec:related:freq}
+
+Write $c = M^\T \one$ for the vector of column sums of $M$, so that
+$\dot{W} = \one^\T M x = c^\T x$. Differentiating $p = x/W$ gives
+\begin{equation}\label{eq:freq}
+  \dot{p} = Mp - (c^\T p)\, p .
+\end{equation}
+Conversely, the right-hand side of \eqref{eq:freq} is a polynomial in the entries of $p$, so
+there is only one solution through each point. Hence the solution of \eqref{eq:freq} that starts
+at a point $p(0) \ge 0$ with $\one^\T p(0) = 1$ is the normalized solution of $\dot{x} = Mx$
+with $x(0) = p(0)$. Theorem~\ref{thm:main} is therefore just as much a theorem about the
+quadratic system \eqref{eq:freq}: every solution that starts on the simplex converges to an
+equilibrium $p^*$, and the growth rate $\dot{W}/W = c^\T p(t)$ of the total converges to
+$c^\T p^* = \one^\T M p^* = \mu$.
+
+In the theory of molecular evolution, \eqref{eq:freq} is Eigen's quasispecies equation. In the
+feature article of Eigen, McCaskill and Schuster~\cite{EMS88} it is equation~(13), with their
+``value matrix'' $\mathbf{W}$ in the place of $M$, their relative concentrations $x_i$ in the
+place of our $p_i$, and their ``excess productions'' $E_i = A_i - D_i$, which are the column
+sums of $\mathbf{W}$, in the place of our $c_i$. They solve it in terms of the eigenvalues and
+eigenvectors of $\mathbf{W}$, by a transformation that they credit to Thompson and
+McBride~\cite{TM74} and to Jones, Enns and Rangnekar~\cite{JER76}. Their solution, equation~(20),
+is the normalized solution of the linear system, written as a sum over a basis of eigenvectors.
+That the frequencies converge to the dominant eigenvector, the ``quasi-species'', rests on one
+sentence \cite[p.~6885]{EMS88}:
+\begin{quote}
+The value matrix $\mathbf{W}$, according to eq 10 and 11, has exclusively positive entries, and
+the Perron--Frobenius theorem applies: the largest eigenvalue $\lambda_0$ is nondegenerate, and
+all components of the vector $\vec{l}_0$ are positive.
+\end{quote}
+
+This is typical of what we found in the literature on quasispecies and on mutation--selection
+models. The matrix is assumed to be irreducible, often positive, and the Perron--Frobenius
+theorem for irreducible matrices does the rest. A search of that literature by the first author
+turned up no convergence result without the assumption, and that is how these notes came to be
+written. The assumption is natural there, but it fails as soon as some type cannot arise,
+directly or through intermediates, from some other type. For instance, when some types do not
+replicate, the corresponding columns of $M$ vanish off the diagonal.
+
+\subsection{The same question for Markov chains}\label{sec:related:markov}
+
+The theorem was waiting in another field, under another name. Choose a number $c$ that is at
+least as large as every column sum of $M$, and put $Q = (M - cI)^\T$. Replacing $M$ by $M - cI$
+multiplies $x(t)$ by $e^{-ct}$ and leaves $p(t)$ as it was. The off-diagonal entries of $Q$ are
+nonnegative, and its row sums $c_i - c$ are at most $0$. So $Q$ holds the transition rates,
+among the states $1, \dots, n$, of a Markov chain in continuous time that has one further state,
+an absorbing one, which it enters from state $i$ at the rate $c - c_i$. Start this chain with
+the distribution $p(0)$. Then $e^{-ct} x_j(t)/W(0)$ is the probability that at time $t$ the
+chain is in state $j$, not yet absorbed, and therefore
+\[
+  p_j(t) \;=\; \Pr\bigl(\,\text{the chain is in state $j$ at time $t$}
+               \bigm| \text{it has not been absorbed by time $t$}\,\bigr) .
+\]
+An arc from $j$ to $i$ is a possible jump from $j$ to $i$, and $R$ is the set of states that the
+chain can reach from the states it may start in. In these terms,
+Theorem~\ref{thm:main}\ref{thm:main:limit} says that the conditional distribution $p(t)$ has a
+limit $p^*$, and that $(p^*)^\T Q = (\mu - c)\,(p^*)^\T$. Probabilists call $p^*$ the
+\emph{limiting conditional distribution} of the chain, or its Yaglom limit, and the second
+property makes it a \emph{quasi-stationary distribution}: a chain started with the distribution
+$p^*$ and conditioned on survival keeps the distribution $p^*$. The sets of indices that are
+reachable from one another are the \emph{communicating classes} of the chain, and $M$ is
+irreducible when there is only one class.
+
+\subsection{Mandl's theorems}\label{sec:related:mandl}
+
+For a single communicating class, the existence of the limiting conditional distribution is the
+Markov-chain form of the irreducible case. It is the subject of two classic papers of Darroch
+and Seneta~\cite{DS65,DS67}, which we know through~\cite{vDP08,vDP13}. The general case, an
+arbitrary set of states with any number of classes, had been treated before them by Petr Mandl:
+for chains in discrete time in~\cite{Mandl59}, and for continuous time in~\cite{Mandl60}. Both
+papers are in Russian, in the Czech journal \emph{\v{C}asopis pro p\v{e}stov\'an\'{\i}
+matematiky}, with summaries in Czech and French. Their titles mention neither matrices nor
+eigenvalues, let alone mutation and selection. Both can be read free of charge at the Czech
+Digital Mathematics Library.
+
+Here are the key passages of~\cite{Mandl60}, translated from the Russian by the second author.
+Square brackets mark our insertions and omissions, and the original alone is authoritative.
+
+\begin{quote}\small
+[p.~448, summary]\enspace The paper studies the limiting behaviour of the probability
+distribution on a set of states of a homogeneous Markov process with a finite number of states,
+under the assumption that the system's stay in the given set has not been interrupted.
+
+[p.~448]\enspace Let the matrix $Q = \|q_{ij}\|$ of transition probability densities of such a
+process be given. Take any set $T$ of states of the process and an initial probability
+distribution, given by a vector $p$ and concentrated entirely on the states of the set $T$. The
+subject of our investigation will be the limiting behaviour of the quantities $P_j(t \mid T)$,
+which denote the probability that the system is in state $j$ at time $t$, given that up to
+time $t$ the system has remained continuously in states belonging to the class $T$.
+
+[p.~449]\enspace \emph{Definition.} A set $S$ of states of a homogeneous Markov process will be
+called \emph{regular} if the matrix $Q_S$ of transition probability densities between the states
+of the set $S$ is indecomposable.
+
+\emph{Theorem 1.} If $T$ is regular, then for every $j \in T$ there exists the limit
+$\lim_{t\to\infty} P_j(t \mid T) = P_j(T) > 0$, which does not depend on the initial probability
+distribution.
+
+[p.~450]\enspace \emph{Definition.} If the class $T$ of states of the process is regular, then
+the characteristic number $\varrho$ of the matrix $Q_T$ that has the largest real part among all
+its characteristic numbers will be called the \emph{characteristic number of the class}~$T$.
+
+[pp.~450--451: a general set $T$ splits into classes $T_j$ of states that communicate with one
+another within $T$; these classes are regular; and $T_n \prec T_m$ means that $T_m \ne T_n$ and
+that the states of $T_m$ can be reached from the states of $T_n$ within $T$.]
+
+[p.~454]\enspace The following theorems can on the whole be proved easily, by using the lemma
+and the representation [of the blocks of $\exp(Q_T t)$ as sums of convolutions along sequences
+of classes]. We state them without proof; proofs of the same theorems for homogeneous chains can
+be found in~\cite{Mandl59}. By $P_T(t)$ we denote the probability that the system has remained
+continuously in states of the set $T$ from the beginning at least until time $t$. [\,\dots] On
+the initial probability distribution $p$ we impose, besides the assumption that it is
+concentrated entirely on the states of the set $T$, the further condition that there is a
+positive probability that at time zero the system is in those classes $T_k$ for which there
+exists no $T_j \prec T_k$ (Condition~A).
+
+\emph{Theorem 2.} Let $\varrho = \max_{T_j} \varrho_j$, and let $k$ be the largest number such
+that there exist classes $T_{\alpha_1} \prec T_{\alpha_2} \prec \dots \prec T_{\alpha_k}$ for
+which $\varrho_{\alpha_1} = \varrho_{\alpha_2} = \dots = \varrho_{\alpha_k} = \varrho$. Then, if
+Condition~A is satisfied, there exists
+$\lim_{t\to\infty} t^{-k+1} e^{-\varrho t} P_T(t) > 0$.
+
+\emph{Theorem 3.} Under the same conditions as in Theorem~2, the following holds: for every
+$m \in T$ there exists $\lim_{t\to\infty} P_m(t \mid T) = P_m(T)$; this limit is positive if and
+only if $m$ belongs to a class $T_j$ for which there exist
+$T_{s_1} \prec T_{s_2} \prec \dots \prec T_{s_k} \preceq T_j$ whose characteristic numbers are
+equal to $\varrho$. In that case
+\[
+  P_m(T) = C \sum\nolimits^{*} p_{r_1} A_{r_1} Q_{r_1 r_2} A_{r_2} \cdots A_j e_m .
+\]
+$C$ is a constant independent of $j$, and $\sum^{*}$ means that the summation is over all
+sequences of classes $T_{r_1} \prec T_{r_2} \prec \dots \prec T_j$ among whose characteristic
+numbers the number $\varrho$ occurs $k$ times.
+
+[p.~455]\enspace \emph{Theorem 4.} Let the conditions of Theorem~2 be satisfied, and let there
+exist one and only one $k$-term sequence of classes
+$T_{s_1} \prec T_{s_2} \prec \dots \prec T_{s_k}$ with characteristic numbers $\varrho$; then
+the probability $P_m(T)$ is the same for all initial distributions satisfying Condition~A.
+\end{quote}
+
+In the formula of Theorem~3, $p_r$ is the part of the row vector $p$ that belongs to the class
+$T_r$, $e_m$ is the $m$th unit column vector, $Q_{rs}$ is the block of $Q$ between the classes
+$T_r$ and $T_s$, and $A_r$ is a matrix that the lemma attaches to the class $T_r$: it is
+$(\varrho I - Q_{rr})^{-1}$ if $\varrho_r < \varrho$, and the coefficient of $e^{\varrho t}$ in
+$\exp(Q_{rr} t)$ if $\varrho_r = \varrho$. The lemma, which Mandl does prove (pp.~452--454),
+gives the growth of each term in the expansion of $\exp(Q_T t)$ along a chain of classes: it is
+$t^{n-1} e^{\varrho t}/(n-1)!$ times a matrix with positive entries, where $\varrho$ is the
+largest characteristic number on the chain and $n$ is the number of classes on the chain that
+attain it.
+
+To read this as a statement about $\dot{x} = Mx$, take the chain of
+Section~\ref{sec:related:markov} and $T = R$. Then $P_j(t \mid T) = p_j(t)$, the characteristic
+number of a class is the eigenvalue of largest real part of the corresponding principal
+submatrix of $M$, less $c$, and $\varrho = \mu - c$. Condition~A, which we read as asking for
+positive initial probability in each class that no other class precedes, holds of itself: such a
+class of $R$ must contain an index of $S$, because every index of $R$ is reached from $S$ along
+a path that stays in $R$. Theorem~3 of~\cite{Mandl60} is then the existence of
+$p^* = \lim_{t\to\infty} p(t)$ in Theorem~\ref{thm:main}\ref{thm:main:limit}, for every initial
+state that the standing hypotheses allow. Theorem~2 of~\cite{Mandl60} is the growth law
+$W(t) \sim \mathrm{const} \cdot t^{k-1} e^{\mu t}$ behind Step~3, whose exponent is Mandl's $k$
+less one. Mandl's theorems also tell us something that Theorem~\ref{thm:main} does not, namely
+which entries of $p^*$ are positive: those in the classes of $R$ that end a longest chain of
+classes with eigenvalue $\mu$, and those in the classes that can be reached from such a class.
+What they do not say, except for a single class, is that $p^*$ is an eigenvector of $M$. For a
+single class Mandl does show that the limit is an eigenvector, and in~\cite{Mandl59} he adds the
+remark that a chain started with the limit distribution keeps it for as long as it stays in $T$,
+which is the property now called quasi-stationarity. In the Markov-chain literature the general
+statement is the fact that a limiting conditional distribution is quasi-stationary,
+which~\cite{vDP13} attributes to Vere-Jones.
+
+As for proofs, \cite{Mandl60} proves the lemma and, as the passage quoted above says, states
+Theorems~2--4 without proof, referring to~\cite{Mandl59}, where the corresponding theorems are
+proved for chains in discrete time whose classes are aperiodic. The present text can be read as
+one way of making good on Mandl's ``easily'', in continuous time and with the eigenvector
+identified. Its route is different: it goes through the leading term of $e^{Bt}$ on the whole
+reachable set, where Mandl follows the chains of classes one by one.
+
+\subsection{After Mandl}\label{sec:related:after}
+
+The later literature in English does not make Mandl's result easy to find. Van Doorn and
+Pollett~\cite{vDP08} start from the result for a single class and ``address the problem of
+generalizing this result to a setting in which $S$ may be reducible, and obtain a complete
+solution if the eigenvalue with maximal real part of the generator of the (sub)Markov chain on
+$S$ has geometric (but not, necessarily, algebraic) multiplicity one''. (Their $S$ is the set of
+all states other than the absorbing one.) They cite~\cite{Mandl60} for the rate of decay in the
+irreducible case. Their companion paper for discrete time~\cite{vDP09} proves the limit when a
+single class dominates in the appropriate sense, from asymptotics of
+Lindqvist~\cite{Lindqvist} that extend those of~\cite{Mandl59}, and remarks of an example
+outside that hypothesis: ``Of course there exists a unique limiting conditional distribution'',
+with weights that depend on the initial distribution. Their survey~\cite{vDP13}, the natural way into the
+subject, calls the identification of the limit for a given initial distribution ``what remains
+to be solved'', and then solves it under a hypothesis of the same kind. A reader who enters the
+subject through these papers, as we did, comes away thinking that the general case is delicate.
+Mandl had stated it half a century earlier.
+
+A recent paper of Champagnat and Villemonais~\cite{CV} treats reducible state spaces in great
+generality: general state spaces, and finitely or countably many classes. Its leading term is
+$\theta^{n} n^{j}$, with an explicit ``polynomial convergence parameter'' $j$, the counterpart of
+the power of $t$ in Step~3. It begins its history in the right place: ``The study of
+quasi-limiting behaviour of Markov chains on reducible state spaces started with the work of
+Mandl''. It was this paper, with~\cite{vDP09}, that sent us to~\cite{Mandl59,Mandl60}.
+
+\subsection{Entry by entry: the theorem of Santesso and Valcher}\label{sec:related:sv}
+
+Closest to the present text in its formulation is the work of Santesso and Valcher on positive
+linear systems~\cite{SV07}. It belongs to the theory of nonnegative matrices, and it does not
+cite Mandl. Its Theorem~1 gives the rate of growth of every entry of the exponential of a
+Metzler matrix. In our notation, and with the classes of Section~\ref{sec:related:markov}, it
+says the following. Call the eigenvalue of largest real part of $M_{CC}$ the \emph{dominant
+eigenvalue} of the class $C$; it is real, by Lemma~\ref{lem:PF}. If $i$ is not reachable from
+$j$, then $[e^{Mt}]_{ij} = 0$ for all $t$. If it is, then
+\begin{equation}\label{eq:SV}
+  \lim_{t\to\infty} \frac{[e^{Mt}]_{ij}}{t^{m} e^{\lambda t}} = c_{ij} > 0 ,
+\end{equation}
+where $\lambda$ is the largest of the dominant eigenvalues of the classes that lie on paths from
+$j$ to $i$, and $m + 1$ is the largest number of classes with that dominant eigenvalue on a
+single such path.
+
+This sharpens Step~1, which says only which entries of $e^{Mt}$ are positive. In content it is
+Mandl's lemma, read entry by entry. From it Santesso and Valcher conclude that each column of
+the exponential, normalized, tends to a nonnegative eigenvector, which belongs to the largest of
+the dominant eigenvalues of the classes accessible from the index of the column (their
+Proposition~4 and Corollary~2). For an initial state with a single positive entry, that is the
+limit in Theorem~\ref{thm:main}\ref{thm:main:limit}, with the same $\mu$.
+
+\paragraph{A short road to the limit.}
+Given this theorem, the limit in Theorem~\ref{thm:main}\ref{thm:main:limit} exists almost by
+inspection. For $i \in R$ we have $x_i(t) = \sum_{j \in S} [e^{Mt}]_{ij}\, x_j(0)$, and by
+\eqref{eq:SV} each term is either zero or of the exact order $t^{m} e^{\lambda t}$, for a pair
+$(\lambda, m)$ that depends on $i$ and $j$. Order such pairs by $\lambda$ first and by $m$
+second, and let $(\lambda^\circ, m^\circ)$ be the largest pair that occurs. Then
+$x(t)/(t^{m^\circ} e^{\lambda^\circ t})$ tends to a vector $v \ge 0$ with $v \ne 0$, and so
+$p(t) \to v/\one^\T v$. Moreover $\lambda^\circ = \mu$, because every class of $R$ lies on a
+path that starts in $S$. Only the equation $M p^* = \mu p^*$ needs a further argument, and the
+one of Step~4(ii) will do. The first proof of the convergence that the first author obtained,
+from a different language model, Gemini (Google), took this road.
+
+\paragraph{Why the present text does not take it.}
+There are two reasons. The first is that Theorem~\ref{thm:main} needs much less than
+\eqref{eq:SV}. After the reduction to $R$ the vector $y(\tau)$ is strictly positive, and then
+the leading term of $e^{Bt}$ as a whole decides the limit (Steps~3--5). Nothing has to be known
+about single entries, or about chains of classes.
+
+The second reason is that the proof of Theorem~1 published in~\cite{SV07} is incomplete at one
+step. Theorem~1 is presented there as an immediate corollary of Proposition~3, and in the proof
+of Proposition~3 the strict positivity of the limit rests on the words ``by Proposition~2,
+$\mathrm{block}_1[\mathbf{v}_{\mathcal{C}_b}] \gg 0$'' \cite[p.~296]{SV07}. Here
+$\mathbf{v}_{\mathcal{C}_b}$ is an eigenvector attached to a class $\mathcal{C}_b$, and its
+first block is its part in the first class. Proposition~2 \cite[p.~292]{SV07} gives this only
+if every class that comes before $\mathcal{C}_b$ in the ordering of the classes is of one of two
+kinds: either it is accessible from $\mathcal{C}_b$ and has a smaller dominant eigenvalue, or it
+is not accessible from $\mathcal{C}_b$ and does not have the dominant eigenvalue of
+$\mathcal{C}_b$ among its eigenvalues. The proof checks the first kind and is silent about the
+second. For the matrix
+\[
+  A = \begin{bmatrix}
+        0 & 1 & 1 & 0 & 0 \\
+        0 & 1 & 0 & 1 & 0 \\
+        0 & 0 & 1 & 1 & 0 \\
+        0 & 0 & 0 & 1 & 1 \\
+        0 & 0 & 0 & 0 & 0
+      \end{bmatrix}
+\]
+the classes are the single indices, with dominant eigenvalues $0, 1, 1, 1, 0$. The eigenvector
+in question is $(2, 1, 1, 0, 0)^\T$, attached to the third class, and the second class is not
+accessible from the third but has the same eigenvalue $1$. So Proposition~2 does not apply.
+
+The conclusion of Theorem~1 is nevertheless true for this matrix: for instance
+$[e^{At}]_{15} = 2te^{t} + 2t - 4e^{t} + 4$, of the order $t e^{t}$ that \eqref{eq:SV} predicts.
+We know of no matrix for which the theorem fails, and it agrees with Mandl's lemma. But a proof
+of Theorem~\ref{thm:main} that started from Theorem~1 would first have had to prove it. It was
+in checking the starting point of that first proof that the gap came to light.
+
+\subsection{A note on the search, and on sources}\label{sec:related:search}
+
+The search that failed asked the literature on mutation--selection models and on quasispecies
+for convergence ``without irreducibility''. The search that succeeded began from a colleague's
+remark about the frequency equation~\eqref{eq:freq}, and asked a different question: what
+\emph{is} $p(t)$? Once it is recognized as the distribution of a Markov chain conditioned on
+survival, the words to search for are ``quasi-stationary'' and ``limiting conditional
+distribution'', and a few steps lead from the survey~\cite{vDP13} to~\cite{CV} and back
+to Mandl. The obstacle was vocabulary, not the depth of the mathematics. A query about mutation
+and selection does not return a paper, in Russian, on ``probabilities within groups of states'',
+however exactly it answers the question.
+
+The search, the reading and the translation reported in this section are the second author's.
+We have tried to say only what we have read. Entries of the bibliography marked ``not consulted'' are cited on
+the authority of the works named there. We read both of Mandl's papers in full, though without checking every step of
+the proofs in~\cite{Mandl59}, and of~\cite{CV} we read the introduction and the remarks that
+bear on finite state spaces. This
+section is not a survey, and there are surely relevant works that we have missed, for instance
+in the literature on multitype branching processes and on powers of nonnegative matrices.
+
 % >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 % LEAN NOTES. This section, the block marked "LEAN NOTES" in the preamble and the sentence marked
 % "LEAN NOTES" in the opening paragraph are the only places where this file mentions Lean. A
@@ -481,8 +784,9 @@ $2$. For $x(0) \gg 0$ we get $R = \{1,2\}$, $\mu = 2$ and $p^* = e_2$.
 
 Theorem~\ref{thm:main} and the whole of its proof, that is, Lemmas~\ref{lem:exp}--\ref{lem:PF} and
 Steps~1--6, have been formalized in the proof assistant Lean~4, on top of the mathematical library
-Mathlib, and Lean accepts the formal proof. Remark~\ref{rem:roles}, Example~\ref{ex:reduction} and
-the unnumbered comments between the numbered statements are commentary; they are not formalized.
+Mathlib, and Lean accepts the formal proof. Remark~\ref{rem:roles}, Example~\ref{ex:reduction},
+the unnumbered comments between the numbered statements and Section~\ref{sec:related} are
+commentary; they are not formalized.
 
 This section says where the formal statements are, how to read the formal statement of the
 theorem, and where the formal proof differs from the text. Its last subsection describes an
@@ -888,7 +1192,8 @@ The file contains eleven definitions and three statements, named \lean{theorem_2
 In Sections~\ref{sec:setting}--\ref{sec:proof} the present text differs from that file by three
 additions, which say what Astra pointed out had been left unsaid: the words ``real or complex''
 in Lemma~\ref{lem:modes}, the condition $m \ge 1$ in Lemma~\ref{lem:PF}, and the remark after
-Definition~\ref{def:reach} that $S$ and $R$ are not empty.
+Definition~\ref{def:reach} that $S$ and $R$ are not empty. Section~\ref{sec:related}, and the
+sentence of the opening paragraph that refers to it, were added later still.
 
 \paragraph{Scrutiny of the challenge.}
 Before any comparison was made, the second author examined that file.
@@ -1012,17 +1317,96 @@ ChatGPT-6.2 Astra (OpenAI).
 % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 % =====================================================================
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
 
 \bibitem{Axler}
 S.~Axler,
 \emph{Linear Algebra Done Right}, 4th ed.,
 Undergraduate Texts in Mathematics, Springer, 2024.
 
+\bibitem{CV}
+N.~Champagnat and D.~Villemonais,
+Quasi-stationary distributions in reducible state spaces,
+\emph{Adv. Appl. Probab.} 58 (2026), 956--992.
+We consulted the version of 17~October 2025 at \url{https://arxiv.org/abs/2201.10151}.
+
+\bibitem{DS65}
+J.~N. Darroch and E.~Seneta,
+On quasi-stationary distributions in absorbing discrete-time finite Markov chains,
+\emph{J. Appl. Probab.} 2 (1965), 88--100.
+Not consulted; cited after \cite{vDP09,vDP13}.
+
+\bibitem{DS67}
+J.~N. Darroch and E.~Seneta,
+On quasi-stationary distributions in absorbing continuous-time finite Markov chains,
+\emph{J. Appl. Probab.} 4 (1967), 192--196.
+Not consulted; cited after \cite{vDP08,vDP13}.
+
+\bibitem{vDP08}
+E.~A. van Doorn and P.~K. Pollett,
+Survival in a quasi-death process,
+\emph{Linear Algebra Appl.} 429 (2008), 776--791.
+We consulted the authors' preprint of 8~June 2007.
+
+\bibitem{vDP09}
+E.~A. van Doorn and P.~K. Pollett,
+Quasi-stationary distributions for reducible absorbing Markov chains in discrete time,
+\emph{Markov Process. Related Fields} 15 (2009), 191--204.
+
+\bibitem{vDP13}
+E.~A. van Doorn and P.~K. Pollett,
+Quasi-stationary distributions for discrete-state models,
+\emph{European J. Oper. Res.} 230 (2013), 1--14.
+We consulted the authors' version.
+
+\bibitem{EMS88}
+M.~Eigen, J.~McCaskill and P.~Schuster,
+Molecular quasi-species,
+\emph{J. Phys. Chem.} 92 (1988), 6881--6891.
+
 \bibitem{HJ}
 R.~A. Horn and C.~R. Johnson,
 \emph{Matrix Analysis}, 2nd ed.,
 Cambridge University Press, Cambridge, 2013.
+
+\bibitem{JER76}
+B.~L. Jones, R.~H. Enns and S.~S. Rangnekar,
+On the theory of selection of coupled macromolecular systems,
+\emph{Bull. Math. Biol.} 38 (1976), 15--28.
+Not consulted; cited after \cite{EMS88}.
+
+\bibitem{Lindqvist}
+B.~H. Lindqvist,
+Asymptotic properties of powers of nonnegative matrices, with applications,
+\emph{Linear Algebra Appl.} 114/115 (1989), 555--588.
+Not consulted; cited after \cite{vDP08,vDP09}.
+
+\bibitem{Mandl59}
+P.~Mandl,
+On the asymptotic behaviour of probabilities in groups of states of a homogeneous Markov chain
+(in Russian, with Czech and French summaries; the title is translated),
+\emph{\v{C}asopis P\v{e}st. Mat.} 84 (1959), 140--149.
+\url{http://dml.cz/dmlcz/108549}.
+
+\bibitem{Mandl60}
+P.~Mandl,
+On the asymptotic behaviour of probabilities within groups of states of a homogeneous Markov
+process (in Russian, with Czech and French summaries; the title is translated),
+\emph{\v{C}asopis P\v{e}st. Mat.} 85 (1960), 448--456.
+\url{http://dml.cz/dmlcz/117347}.
+
+\bibitem{SV07}
+P.~Santesso and M.~E. Valcher,
+On the zero pattern properties and asymptotic behavior of continuous-time positive system
+trajectories,
+\emph{Linear Algebra Appl.} 425 (2007), 283--302.
+
+\bibitem{TM74}
+C.~J. Thompson and J.~L. McBride,
+On Eigen's theory of the self-organization of matter and the evolution of biological
+macromolecules,
+\emph{Math. Biosci.} 21 (1974), 127--142.
+Not consulted; cited after \cite{EMS88}.
 
 \end{thebibliography}
 

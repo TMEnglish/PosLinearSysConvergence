@@ -9,8 +9,9 @@ A Lean 4 formalization, on top of Mathlib, of the following theorem.
 
 The precise statement, with the eigenvalue identified, is Theorem 2 of the accompanying text,
 `Positive linear system convergence.tex`. The text gives the proof in ordinary mathematical
-language; its Section 4 explains how to read the formal statement and where the formal proof
-differs from the text.
+language. Its Section 4 relates the result to earlier work: the convergence itself is not new,
+and in the language of Markov chains it goes back to Mandl (1959, 1960). Its Section 5 explains
+how to read the formal statement and where the formal proof differs from the text.
 
 ## Where things are
 
@@ -51,7 +52,7 @@ in a file `Check.lean` and run `lake env lean Check.lean`. The answer is `propex
 ## Independent check
 
 The results were also stated in Lean independently of this library, and the library proves that
-independent version too. Section 4.9 of the text describes this check in full.
+independent version too. Section 5.9 of the text describes this check in full.
 
 * `IndependentCheck/Challenge.lean` states Theorem 2, Lemma 4 and Lemma 5 of the text, with its
   own definitions and with `sorry` in place of each proof. It was written by ChatGPT-6.2 Astra
